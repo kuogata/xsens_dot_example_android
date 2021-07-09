@@ -78,6 +78,7 @@ import static com.xsens.dot.android.HR.views.MainActivity.FRAGMENT_TAG_DATA;
 import static com.xsens.dot.android.sdk.models.XsensDotDevice.LOG_STATE_ON;
 import static com.xsens.dot.android.sdk.models.XsensDotDevice.PLOT_STATE_ON;
 import static com.xsens.dot.android.sdk.models.XsensDotPayload.PAYLOAD_TYPE_COMPLETE_EULER;
+import static com.xsens.dot.android.sdk.models.XsensDotPayload.PAYLOAD_TYPE_COMPLETE_QUATERNION;
 
 /**
  * A fragment for presenting the data and storing to file.
@@ -308,7 +309,8 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
             XsensDotLogger logger = new XsensDotLogger(
                     getContext(),
                     XsensDotLogger.TYPE_CSV,
-                    PAYLOAD_TYPE_COMPLETE_EULER,
+                    PAYLOAD_TYPE_COMPLETE_QUATERNION,
+                    //PAYLOAD_TYPE_COMPLETE_EULER,
                     filename,
                     tag,
                     fwVersion,
@@ -423,7 +425,8 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
                             mBinding.syncResult.setText(R.string.sync_result_success);
 
                             // Syncing precess is success, choose one measurement mode to start measuring.
-                            mSensorViewModel.setMeasurementMode(PAYLOAD_TYPE_COMPLETE_EULER);
+                            mSensorViewModel.setMeasurementMode(PAYLOAD_TYPE_COMPLETE_QUATERNION);
+                            //mSensorViewModel.setMeasurementMode(PAYLOAD_TYPE_COMPLETE_EULER);
 
                             createFiles();
 

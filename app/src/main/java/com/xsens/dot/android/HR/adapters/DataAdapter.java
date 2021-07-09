@@ -63,6 +63,11 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
     // Put all data from sensors into one list
     private ArrayList<HashMap<String, Object>> mDataList;
 
+    //
+    private static float[] accX_series = new float[5];
+    private int stepNum = 0;
+    private int chkTime = 1000;
+
     /**
      * Default constructor.
      *
@@ -92,19 +97,41 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
 
         holder.sensorName.setText(tag);
 
-        double[] eulerAngles = xsData.getEuler();
-        String eulerAnglesStr =
-                String.format("%.6f", eulerAngles[0]) + ", " +
-                String.format("%.6f", eulerAngles[1]) + ", " +
-                String.format("%.6f", eulerAngles[2]);
-        holder.orientationData.setText(eulerAnglesStr);
+        float[] quaternions = xsData.getQuat();
 
+        double[] eulerAngles = xsData.getEuler();
         float[] freeAcc = xsData.getFreeAcc();
-        String freeAccStr =
+        String eulerAnglesStr =
                 String.format("%.6f", freeAcc[0]) + ", " +
                 String.format("%.6f", freeAcc[1]) + ", " +
                 String.format("%.6f", freeAcc[2]);
+        holder.orientationData.setText(eulerAnglesStr);
+
+        float[][] rotM = calcQuaternionRotationMatrix(quaternions);
+        float[] accV = calcSensCoordinateAcc(rotM, freeAcc);
+
+        accX_series[0] = accX_series[1];
+        accX_series[1] = accX_series[2];
+        accX_series[2] = accX_series[3];
+        accX_series[3] = accX_series[4];
+        accX_series[4] = freeAcc[2];
+
+        if(chkTime > 15){ //about 0.25 sec
+            if(detectMaxim(accX_series,5f,15f)) {
+                stepNum++;
+                chkTime = 0;
+            }
+        }
+
+        chkTime++;
+
+        String freeAccStr =
+                String.format("%d", stepNum) + ", " +
+                String.format("%.6f", accV[0]) + ", " +
+                        String.format("%.6f", accV[1]) + ", " +
+                        String.format("%.6f", accV[2]);
         holder.freeAccData.setText(freeAccStr);
+
     }
 
     @Override
@@ -112,6 +139,56 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
 
         return mDataList == null ? 0 : mDataList.size();
     }
+
+    public float[][] calcQuaternionRotationMatrix(float[] q){
+        float[][] rotM = new float[3][3];
+        float w = q[0];
+        float x = q[1];
+        float y = q[2];
+        float z = q[3];
+
+        rotM[0][0] = 1.0f - 2*y*y - 2*z*z;
+        rotM[0][1] = 2*x*y + 2*w*z;
+        rotM[0][2] = 2*x*z - 2*w*y;
+
+        rotM[1][0] = 2*x*y - 2*w*z;
+        rotM[1][1] = 1.0f - 2*x*x -2*z*z;
+        rotM[1][2] = 2*y*z + 2*w*x;
+
+        rotM[2][0] = 2*x*z + 2*w*y;
+        rotM[2][1] = 2*y*z - 2*w*x;
+        rotM[2][2] = 1.0f - 2*x*x - 2*y*y;
+
+        return rotM;
+    }
+
+    public float[] calcSensCoordinateAcc(float[][] rotM, float[] accV){
+        float[] actV_cord = new float[3];
+
+        actV_cord[0] = rotM[0][0] * accV[0] + rotM[0][1] * accV[1] + rotM[0][2] * accV[2];
+        actV_cord[1] = rotM[1][0] * accV[0] + rotM[1][1] * accV[1] + rotM[1][2] * accV[2];
+        actV_cord[2] = rotM[2][0] * accV[0] + rotM[2][1] * accV[1] + rotM[2][2] * accV[2];
+
+        return actV_cord;
+    }
+
+    public boolean detectMaxim(float[] accV, float thereL, float thereU){
+
+        if(accV[2] > thereL && accV[2] < thereU){
+            if((accV[2]-accV[0] > 0) && (accV[4]-accV[2] < 0)){
+                return(true);
+            }
+            else{
+                return(false);
+            }
+        }
+        else{
+            return(false);
+        }
+
+    }
+
+
 
     /**
      * A Customized class for ViewHolder of RecyclerView.
