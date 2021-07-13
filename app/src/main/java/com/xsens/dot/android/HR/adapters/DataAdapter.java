@@ -46,6 +46,7 @@ import com.xsens.dot.android.sdk.events.XsensDotData;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Vector;
 
 /**
  * A view adapter for item view to present data.
@@ -67,6 +68,20 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
     private static float[] accX_series = new float[5];
     private int stepNum = 0;
     private int chkTime = 1000;
+    private float stepLength = 0f;
+    private int dataSize = 0;
+    private float debug_max[] = {0f};
+    private float debug_min[] = {0f};
+    private static float[] disX_series = new float[5];
+
+    Vector<Vector<threeAxis>> accDataAll = new Vector<Vector<threeAxis>>();
+    Vector<threeAxis> accData = new Vector<threeAxis>();
+
+    class threeAxis{
+        float x;
+        float y;
+        float z;
+    }
 
     /**
      * Default constructor.
@@ -92,44 +107,87 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
     @SuppressLint("DefaultLocale")
     public void onBindViewHolder(@NonNull DataViewHolder holder, int position) {
 
+        threeAxis accAxis = new threeAxis();
         String tag = (String) mDataList.get(position).get(KEY_TAG);
         XsensDotData xsData = (XsensDotData) mDataList.get(position).get(KEY_DATA);
 
         holder.sensorName.setText(tag);
 
         float[] quaternions = xsData.getQuat();
-
         double[] eulerAngles = xsData.getEuler();
         float[] freeAcc = xsData.getFreeAcc();
-        String eulerAnglesStr =
-                String.format("%.6f", freeAcc[0]) + ", " +
-                String.format("%.6f", freeAcc[1]) + ", " +
-                String.format("%.6f", freeAcc[2]);
-        holder.orientationData.setText(eulerAnglesStr);
-
         float[][] rotM = calcQuaternionRotationMatrix(quaternions);
         float[] accV = calcSensCoordinateAcc(rotM, freeAcc);
+
+        accAxis.x = accV[0];
+        accAxis.y = accV[1];
+        accAxis.z = accV[2];
+        accData.add(accAxis);
 
         accX_series[0] = accX_series[1];
         accX_series[1] = accX_series[2];
         accX_series[2] = accX_series[3];
         accX_series[3] = accX_series[4];
-        accX_series[4] = freeAcc[2];
+        accX_series[4] = accV[2];
 
         if(chkTime > 15){ //about 0.25 sec
-            if(detectMaxim(accX_series,5f,15f)) {
+            /*if(detectMaxim(accX_series,5f,15f)) {
                 stepNum++;
                 chkTime = 0;
+                dataSize = accData.size();
+                accZs = accData.firstElement().z;
+                if(dataSize > 4){
+                    accZ[0] = Math.abs(accData.elementAt(dataSize-4).z - accData.elementAt(0).z)*bodyLength/9.81f;
+                    accZ[1] = accData.elementAt(dataSize-3).z;
+                    accZ[2] = accData.elementAt(3).z;
+                }
+                accDataAll.add(accData);
+                accData.clear();
+            }
+
+            if(chkTime>200){
+                accData.clear();
+            }*/
+
+            if(detectMaximSagittal(accX_series, 1.5f)){
+                stepNum++;
+                chkTime = 0;
+
+                int accL = accData.size();
+                float[] accV_buf = new float[accL];
+                for(int i=0;i<accL;i++){
+                    accV_buf[i] = accData.get(i).z;
+                }
+                stepLength = calcCogDis(accV_buf, 1780f, debug_max, debug_min);
+
+                disX_series[0] = disX_series[1];
+                disX_series[1] = disX_series[2];
+                disX_series[2] = disX_series[3];
+                disX_series[3] = disX_series[4];
+                disX_series[4] = stepLength;
+
+                stepLength = (disX_series[0]+disX_series[1]+disX_series[2]+disX_series[3]+disX_series[4])*0.2f;
+
+                accDataAll.add(accData);
+                accData.clear();
             }
         }
 
+        if( stepNum > 0 ){
+        }
         chkTime++;
 
-        String freeAccStr =
+        String eulerAnglesStr =
                 String.format("%d", stepNum) + ", " +
-                String.format("%.6f", accV[0]) + ", " +
-                        String.format("%.6f", accV[1]) + ", " +
-                        String.format("%.6f", accV[2]);
+                        String.format("%.6f", freeAcc[0]) + ", " +
+                        String.format("%.6f", freeAcc[1]) + ", " +
+                        String.format("%.6f", freeAcc[2]);
+        holder.orientationData.setText(eulerAnglesStr);
+
+        String freeAccStr =
+                        String.format("%.6f", stepLength) + ", " +
+                        String.format("%.6f", debug_max[0]) + ", " +
+                        String.format("%.6f", debug_min[0]);
         holder.freeAccData.setText(freeAccStr);
 
     }
@@ -139,6 +197,8 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
 
         return mDataList == null ? 0 : mDataList.size();
     }
+
+
 
     public float[][] calcQuaternionRotationMatrix(float[] q){
         float[][] rotM = new float[3][3];
@@ -172,7 +232,7 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
         return actV_cord;
     }
 
-    public boolean detectMaxim(float[] accV, float thereL, float thereU){
+    /*public boolean detectMaxim(float[] accV, float thereL, float thereU){
 
         if(accV[2] > thereL && accV[2] < thereU){
             if((accV[2]-accV[0] > 0) && (accV[4]-accV[2] < 0)){
@@ -185,10 +245,85 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
         else{
             return(false);
         }
+    }*/
+    
+    public boolean detectMaximSagittal(float[] accV, float threshould){
 
+        float ddacc = Math.abs(accV[2] -2*accV[1]+accV[0]);
+
+        if(ddacc > threshould){
+            return(true);
+        }
+        else{
+            return(false);
+        }
     }
 
+    /*public float calcStepLength(Vector<threeAxis> accData){
+        float stepLength = 1.0f;
+        int L = accData.size();
+        float bodyLength = 0.5441f * 1780f - 92.95f;
 
+        stepLength = (accData.get(0).z - accData.get(L).z)*bodyLength/9.81f;
+
+        return stepLength;
+    }*/
+
+    public float calcCogDis( float[] accV, float Length, float[] dmax, float[] dmin){
+        float l = 0.5441f * Length - 92.95f;
+        int N = accV.length;
+        int[] minN = {0};
+        int[] maxN = {0};
+        //float minVal = calcDataMin(accV, minN);
+        //データサイズを更新
+        float[] accVs = new float[N];
+        for(int i=2; i<(N-2); i++){
+            accVs[i] = accV[i];
+        }
+
+        float minVal = calcDataMin(accVs, minN);
+        float maxVal = calcDataMax(accVs, maxN);
+
+        dmax[0] = maxVal;
+        dmin[0] = minVal;
+
+        System.out.println(dmax[0]);
+        System.out.println(dmin[0]);
+        return l * (maxVal - minVal) / 9.81f;
+    }
+
+    public float calcDataMax(float[] data, int[] pN){
+
+        int L = data.length;
+        float maxVal = data[0];
+        pN[0] = 0;
+
+        for(int i=0; i<L; i++){
+            if(data[i] > maxVal){
+                maxVal = data[i];
+                pN[0] = i;
+            }
+        }
+
+        System.out.println(pN[0]);
+        return maxVal;
+    }
+
+    public float calcDataMin(float[] data, int[] pN){
+        int L = data.length;
+        float minVal = data[0];
+        pN[0] = 0;
+
+        for(int i=0; i<L; i++){
+            if(data[i] < minVal){
+                minVal = data[i];
+                pN[0] = i;
+            }
+        }
+
+        System.out.println(pN[0]);
+        return minVal;
+    }
 
     /**
      * A Customized class for ViewHolder of RecyclerView.
