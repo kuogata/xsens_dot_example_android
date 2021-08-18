@@ -58,6 +58,7 @@ import com.xsens.dot.android.HR.interfaces.ScanClickInterface;
 import com.xsens.dot.android.HR.interfaces.StreamingClickInterface;
 import com.xsens.dot.android.HR.utils.Utils;
 import com.xsens.dot.android.HR.viewmodels.BluetoothViewModel;
+import com.xsens.dot.android.HR.viewmodels.GraphViewModel;
 import com.xsens.dot.android.HR.viewmodels.SensorViewModel;
 
 /**
@@ -71,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_ENABLE_BLUETOOTH = 1001, REQUEST_PERMISSION_LOCATION = 1002;
 
     // The tag of fragments
-    public static final String FRAGMENT_TAG_SCAN = "scan", FRAGMENT_TAG_DATA = "data";
+    public static final String FRAGMENT_TAG_SCAN = "scan", FRAGMENT_TAG_DATA = "data", FRAGMENT_TAG_GRAPH = "graph";
 
     // The view binder of MainActivity
     private ActivityMainBinding mBinding;
@@ -81,6 +82,9 @@ public class MainActivity extends AppCompatActivity {
 
     // The sensor view model instance
     private SensorViewModel mSensorViewModel;
+
+    // The sensor view model instance
+    private GraphViewModel mGraphViewModel;
 
     // A variable for scanning flag
     private boolean mIsScanning = false;
@@ -185,6 +189,7 @@ public class MainActivity extends AppCompatActivity {
         MenuItem scanItem = menu.findItem(R.id.action_scan);
         MenuItem streamingItem = menu.findItem(R.id.action_streaming);
         MenuItem measureItem = menu.findItem(R.id.action_measure);
+        MenuItem graphItem = menu.findItem(R.id.action_graph);
 
         if (mIsScanning) scanItem.setTitle(getString(R.string.menu_stop_scan));
         else scanItem.setTitle(getString(R.string.menu_start_scan));
@@ -198,12 +203,21 @@ public class MainActivity extends AppCompatActivity {
             scanItem.setVisible(true);
             streamingItem.setVisible(false);
             measureItem.setVisible(true);
+            graphItem.setVisible(true);
 
         } else if (sCurrentFragment.equals(FRAGMENT_TAG_DATA)) {
 
             scanItem.setVisible(false);
             streamingItem.setVisible(true);
             measureItem.setVisible(false);
+            graphItem.setVisible(false);
+
+        } else if (sCurrentFragment.equals(FRAGMENT_TAG_GRAPH)) {
+
+            scanItem.setVisible(false);
+            streamingItem.setVisible(false);
+            measureItem.setVisible(true);
+            graphItem.setVisible(true);
         }
 
         return super.onPrepareOptionsMenu(menu);
@@ -234,6 +248,12 @@ public class MainActivity extends AppCompatActivity {
                 // Change to DataFragment and put ScanFragment to the back stack.
                 Fragment dataFragment = DataFragment.newInstance();
                 addFragment(dataFragment, FRAGMENT_TAG_DATA);
+                break;
+
+            case R.id.action_graph:
+                // Change to GraphFragment and put ScanFragment to the back stack.
+                Fragment graphFragment = GraphFragment.newInstance();
+                addFragment(graphFragment, FRAGMENT_TAG_GRAPH);
                 break;
         }
 
@@ -304,6 +324,17 @@ public class MainActivity extends AppCompatActivity {
         mSensorViewModel = SensorViewModel.getInstance(this);
 
         mSensorViewModel.isStreaming().observe(this, new Observer<Boolean>() {
+
+            @Override
+            public void onChanged(Boolean status) {
+                // If the status of streaming is changed, try to refresh the menu.
+                invalidateOptionsMenu();
+            }
+        });
+
+        mGraphViewModel = GraphViewModel.getInstance(this);
+
+        mGraphViewModel.isStreaming().observe(this, new Observer<Boolean>() {
 
             @Override
             public void onChanged(Boolean status) {

@@ -21,4 +21,10 @@
         android:title="@string/menu_measure"
         app:showAsAction="never" />
 
+    <item
+        android:id="@+id/action_graph"
+        android:orderInCategory="3"
+        android:title="@string/menu_graph"
+        app:showAsAction="never" />
+
 </menu>
