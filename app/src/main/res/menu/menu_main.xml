@@ -27,4 +27,9 @@
         android:title="@string/menu_graph"
         app:showAsAction="never" />
 
+    <item
+        android:id="@+id/action_close"
+        android:orderInCategory="4"
+        android:title="@string/menu_close"
+        app:showAsAction="never" />
 </menu>

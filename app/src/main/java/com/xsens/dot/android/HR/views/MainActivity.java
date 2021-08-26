@@ -190,6 +190,7 @@ public class MainActivity extends AppCompatActivity {
         MenuItem streamingItem = menu.findItem(R.id.action_streaming);
         MenuItem measureItem = menu.findItem(R.id.action_measure);
         MenuItem graphItem = menu.findItem(R.id.action_graph);
+        MenuItem closeItem = menu.findItem(R.id.action_close);
 
         if (mIsScanning) scanItem.setTitle(getString(R.string.menu_stop_scan));
         else scanItem.setTitle(getString(R.string.menu_start_scan));
@@ -198,26 +199,33 @@ public class MainActivity extends AppCompatActivity {
         if (isStreaming) streamingItem.setTitle(getString(R.string.menu_stop_streaming));
         else streamingItem.setTitle(getString(R.string.menu_start_streaming));
 
-        if (sCurrentFragment.equals(FRAGMENT_TAG_SCAN)) {
+        switch (sCurrentFragment) {
+            case FRAGMENT_TAG_SCAN:
 
-            scanItem.setVisible(true);
-            streamingItem.setVisible(false);
-            measureItem.setVisible(true);
-            graphItem.setVisible(true);
+                scanItem.setVisible(true);
+                streamingItem.setVisible(false);
+                measureItem.setVisible(true);
+                graphItem.setVisible(true);
+                closeItem.setVisible(true);
+                break;
 
-        } else if (sCurrentFragment.equals(FRAGMENT_TAG_DATA)) {
+            case FRAGMENT_TAG_DATA:
 
-            scanItem.setVisible(false);
-            streamingItem.setVisible(true);
-            measureItem.setVisible(false);
-            graphItem.setVisible(false);
+                scanItem.setVisible(false);
+                streamingItem.setVisible(true);
+                measureItem.setVisible(true);
+                graphItem.setVisible(true);
+                closeItem.setVisible(true);
+                break;
 
-        } else if (sCurrentFragment.equals(FRAGMENT_TAG_GRAPH)) {
+            case FRAGMENT_TAG_GRAPH:
 
-            scanItem.setVisible(false);
-            streamingItem.setVisible(false);
-            measureItem.setVisible(true);
-            graphItem.setVisible(true);
+                scanItem.setVisible(false);
+                streamingItem.setVisible(false);
+                measureItem.setVisible(true);
+                graphItem.setVisible(true);
+                closeItem.setVisible(true);
+                break;
         }
 
         return super.onPrepareOptionsMenu(menu);
@@ -240,6 +248,8 @@ public class MainActivity extends AppCompatActivity {
                 break;
 
             case R.id.action_streaming:
+            case R.id.bt_start:
+            case R.id.bt_stop:
                 // When the streaming button is clicked, notify to DataFragment and wait for the syncing result.
                 mStreamingListener.onStreamingTriggered();
                 break;
@@ -254,6 +264,11 @@ public class MainActivity extends AppCompatActivity {
                 // Change to GraphFragment and put ScanFragment to the back stack.
                 Fragment graphFragment = GraphFragment.newInstance();
                 addFragment(graphFragment, FRAGMENT_TAG_GRAPH);
+                break;
+
+            case R.id.action_close:
+                this.finish();
+                this.moveTaskToBack(true);
                 break;
         }
 

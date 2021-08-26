@@ -15,7 +15,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.github.mikephil.charting.animation.Easing;
-import com.github.mikephil.charting.charts.RadarChart;
 import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
@@ -29,13 +28,21 @@ import com.xsens.dot.android.HR.R;
 import com.xsens.dot.android.HR.databinding.FragmentDataBinding;
 import com.xsens.dot.android.HR.viewmodels.GraphViewModel;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Objects;
 
 import static com.xsens.dot.android.HR.views.MainActivity.FRAGMENT_TAG_GRAPH;
 
 public class GraphFragment extends Fragment {
 
-    private static final String TAG = DataFragment.class.getSimpleName();
+    private static final String TAG = GraphFragment.class.getSimpleName();
 
     // The view binder of DataFragment
     private FragmentDataBinding mBinding;
@@ -111,11 +118,12 @@ public class GraphFragment extends Fragment {
 
         // X軸設定
         XAxis xAxis = RadarChart.getXAxis();
-        xAxis.setTextSize(12f);  // Xラベルのテキストサイズ
+        xAxis.setTextSize(10f);  // Xラベルのテキストサイズ
         xAxis.setYOffset(0f);   // ?
         xAxis.setXOffset(0f);   // ?
         xAxis.setValueFormatter(new ValueFormatter() {
-            private final String[] paramLabel = new String[]{"Label1", "Label2", "Label3", "Label4", "Label5"}; // 各軸のラベル名
+            //private final String[] paramLabel = new String[]{"Label1", "Label2", "Label3", "Label4", "Label5"}; // 各軸のラベル名
+            private final String[] paramLabel = new String[]{"HR", "Steps", "StepLength", "Label4", "Label5"}; // 各軸のラベル名
 
             @Override
             public String getAxisLabel(float value, AxisBase axis) {
@@ -134,11 +142,11 @@ public class GraphFragment extends Fragment {
 
         // 凡例設定
         Legend l = RadarChart.getLegend();                                  // 凡例
-        l.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);      // 表示位置（縦）
+        l.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);      // 表示位置（縦）
         l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);  // 表示位置（横）
-        l.setOrientation(Legend.LegendOrientation.HORIZONTAL);              // 複数個表示する場合の表示位置
+        l.setOrientation(Legend.LegendOrientation.VERTICAL);              // 複数個表示する場合の表示位置
         l.setDrawInside(false);                                             // 内側に表示するか
-        l.setXEntrySpace(15f);                                              // 横の間隔
+        l.setXEntrySpace(7f);                                              // 横の間隔
         l.setYEntrySpace(5f);                                               // 縦の間隔？
         l.setTextColor(Color.BLUE);                                         // テキストの色
     }
@@ -147,33 +155,67 @@ public class GraphFragment extends Fragment {
 
         float mul = 80;
         float min = 20;
-        int cnt = 5;
+        long cnt = 0;
+        String entry1 = "今回";
+        String entry2 = "前回";
 
         ArrayList<RadarEntry> entries1 = new ArrayList<>();
         ArrayList<RadarEntry> entries2 = new ArrayList<>();
 
-        // NOTE: The order of the entries when being added to the entries array determines their position around the center of
-        // the chart.
-        for (int i = 0; i < cnt; i++) {
-            float val1 = (float) (Math.random() * mul) + min;
-            entries1.add(new RadarEntry(val1));
+        File dir = Objects.requireNonNull(getContext()).getExternalFilesDir(null);
+        assert dir != null;
+        String grfilename = dir.getAbsolutePath() + File.separator + "graphdata.csv";
+        Path path = Paths.get(grfilename);
+        File file = new File(grfilename);
 
-            float val2 = (float) (Math.random() * mul) + min;
-            entries2.add(new RadarEntry(val2));
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(file));
+
+            long lineCount = Files.lines(path).count();
+
+            String line;
+            while ((line = br.readLine()) != null) {
+                cnt ++;
+                String[] values = line.split(",");
+                String datetime = values[0];
+                float hr = Float.parseFloat(values[1]);
+                float steps = Float.parseFloat(values[2]);
+                double steplength = Double.parseDouble(values[3]);
+
+                if (cnt == lineCount){
+                    entry1 = datetime;
+                    entries1.add(new RadarEntry(hr*10));
+                    entries1.add(new RadarEntry(steps));
+                    entries1.add(new RadarEntry((float) (steplength*0.1)));
+                    entries1.add(new RadarEntry(hr));   // test data
+                    entries1.add(new RadarEntry(steps*2/3));    // test data
+                }
+
+                if (cnt == lineCount - 1 ){
+                    entry2 = datetime;
+                    entries2.add(new RadarEntry(hr*10));
+                    entries2.add(new RadarEntry(steps));
+                    entries2.add(new RadarEntry((float) (steplength*0.1)));
+                    entries2.add(new RadarEntry(hr*2)); // test data
+                    entries2.add(new RadarEntry(steps*2/3));    // testdata
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
-        RadarDataSet set1 = new RadarDataSet(entries1, "DataEntry1");  // データ１(DataEntry1)
-        //set1.setColor(Color.CYAN);
-        //set1.setFillColor(Color.CYAN);
-        set1.setColor(Color.parseColor("#fffacd"));            // 線の色 (lemonchiffon)
-        set1.setFillColor(Color.parseColor("#fffacd"));        // 塗り潰したフィールドの色 (lemonchiffon)
+        RadarDataSet set1 = new RadarDataSet(entries1, entry1);  // データ１(DataEntry1)
+        set1.setColor(Color.CYAN);
+        set1.setFillColor(Color.CYAN);
+        //set1.setColor(Color.parseColor("#fffacd"));            // 線の色 (lemonchiffon)
+        //set1.setFillColor(Color.parseColor("#fffacd"));        // 塗り潰したフィールドの色 (lemonchiffon)
         set1.setDrawFilled(true);                                       // 線の下を塗り潰すか
         set1.setFillAlpha(180);                                         // 塗り潰しの透明度
         set1.setLineWidth(2f);                                          // 線の太さ 1f〜
         set1.setDrawHighlightCircleEnabled(true);                       // ?
         set1.setDrawHighlightIndicators(false);                         // ?
 
-        RadarDataSet set2 = new RadarDataSet(entries2, "DataEntry2");
+        RadarDataSet set2 = new RadarDataSet(entries2, entry2);
         //set2.setColor(Color.rgb(121, 162, 175));
         //set2.setFillColor(Color.rgb(121, 162, 175));
         set2.setColor(Color.parseColor("#dda0dd"));            // 線の色 (plum)

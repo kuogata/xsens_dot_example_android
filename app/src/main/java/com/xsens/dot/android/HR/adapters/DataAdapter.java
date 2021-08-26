@@ -33,6 +33,7 @@ package com.xsens.dot.android.HR.adapters;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,9 +45,18 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.xsens.dot.android.HR.R;
 import com.xsens.dot.android.sdk.events.XsensDotData;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Vector;
+
+import static com.xsens.dot.android.HR.views.DataFragment.hrfilename;
 
 /**
  * A view adapter for item view to present data.
@@ -66,6 +76,7 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
 
     //
     private static float[] accX_series = new float[5];
+    private int preStepNum = 0;
     private int stepNum = 0;
     private int chkTime = 1000;
     private float stepLength = 0f;
@@ -82,6 +93,8 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
         float y;
         float z;
     }
+
+    public static String grphdata = "";
 
     /**
      * Default constructor.
@@ -177,6 +190,7 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
         }
         chkTime++;
 
+        // display on UI
         String eulerAnglesStr =
                 String.format("%d", stepNum) + ", " +
                         String.format("%.6f", freeAcc[0]) + ", " +
@@ -190,6 +204,53 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
                         String.format("%.6f", debug_min[0]);
         holder.freeAccData.setText(freeAccStr);
 
+        // save to file
+        if (preStepNum != stepNum) {
+            String datetime = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS", Locale.getDefault()).format(new Date());
+
+            String str = String.format("%s", datetime) + ", " +
+                    String.format("%d", stepNum) + ", " +
+                    String.format("%.6f", stepLength) + ", " +
+                    String.format("%.6f", freeAcc[0]) + ", " +
+                    String.format("%.6f", freeAcc[1]) + ", " +
+                    String.format("%.6f", freeAcc[2]) + ", " +
+                    String.format("%.6f", debug_max[0]) + ", " +
+                    String.format("%.6f", debug_min[0]);
+
+            Log.i(TAG, "steps - str = " + str);
+
+            new SavingThread(str).start();
+
+            grphdata = String.format("%s", datetime) + ", " +
+                    "3.05, " +      // HR
+                    String.format("%d", stepNum) + ", " +
+                    String.format("%.6f", stepLength);
+
+            preStepNum = stepNum;
+        }
+    }
+
+    private class SavingThread extends Thread {
+        String str;
+        public SavingThread(String str) {
+            this.str = str;
+        }
+
+        @Override
+        public void run() {
+            super.run();
+
+            File outputFile = new File(hrfilename);
+
+            try {
+                FileWriter outputWriter = new FileWriter(outputFile, true);
+                outputWriter.append(str).append("\n");
+                outputWriter.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
