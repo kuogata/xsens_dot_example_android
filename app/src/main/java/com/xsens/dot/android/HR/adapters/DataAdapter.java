@@ -74,8 +74,20 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
     private float debug_min[] = {0f};
     private static float[] disX_series = new float[5];
 
-    Vector<Vector<threeAxis>> accDataAll = new Vector<Vector<threeAxis>>();
-    Vector<threeAxis> accData = new Vector<threeAxis>();
+    float intYacc = 0.0f;
+    String nowFoot = null;
+    String supportFoot = null;
+    boolean walkEvent = false;
+    int walkCycle_length = 0;
+
+    ArrayList<threeAxis> accData = new ArrayList<threeAxis>();
+    ArrayList<ArrayList<threeAxis>> accDataAll = new ArrayList<ArrayList<threeAxis>>();
+
+    ArrayList<threeAxis> walkAccData = new ArrayList<threeAxis>();
+    ArrayList<ArrayList<threeAxis>> walkAccDataAll = new ArrayList<ArrayList<threeAxis>>();
+
+    //Vector<Vector<threeAxis>> accDataAll = new Vector<Vector<threeAxis>>();
+    //Vector<threeAxis> accData = new Vector<threeAxis>();
 
     class threeAxis{
         float x;
@@ -119,10 +131,16 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
         float[][] rotM = calcQuaternionRotationMatrix(quaternions);
         float[] accV = calcSensCoordinateAcc(rotM, freeAcc);
 
+
+
         accAxis.x = accV[0];
         accAxis.y = accV[1];
         accAxis.z = accV[2];
         accData.add(accAxis);
+
+        if(walkEvent){
+            walkAccData.add(accAxis);
+        }
 
         accX_series[0] = accX_series[1];
         accX_series[1] = accX_series[2];
@@ -149,7 +167,7 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
                 accData.clear();
             }*/
 
-            if(detectMaximSagittal(accX_series, 1.5f)){
+            if(detectMaximSagittal(accX_series, 1.5f)){ //walk: 1.5f, step: 1.0f
                 stepNum++;
                 chkTime = 0;
 
@@ -169,6 +187,57 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
                 stepLength = (disX_series[0]+disX_series[1]+disX_series[2]+disX_series[3]+disX_series[4])*0.2f;
 
                 accDataAll.add(accData);
+
+                //Judge left or right
+                intYacc = 0.0f;
+                for(int k=0; k<accData.size(); ++k){
+                    intYacc += accData.get(k).y * 0.01667;
+                }
+
+                if(intYacc > 0.0f){
+                    //if(stepNum > 3){
+                    //    if(nowFoot == "left"){
+                            nowFoot = "right";
+                            supportFoot = "left";
+                    /*    }
+                        else{
+                            nowFoot = "left";
+                            supportFoot = "right";
+                        }
+                    }
+                    /else{
+                        nowFoot = "right";
+                        supportFoot = "left";
+                    }*/
+                }
+                else if(intYacc < 0.0f){
+
+                    //if(stepNum > 3){
+                    //    if(nowFoot == "right"){
+                            nowFoot = "left";
+                            supportFoot = "right";
+                    /*    }
+                        else{
+                            nowFoot = "right";
+                            supportFoot = "left";
+                        }
+                    }
+                    else{
+                        nowFoot = "left";
+                        supportFoot = "right";
+                    }*/
+
+                    if(walkEvent == false){
+                        walkEvent = true;
+                    }
+                    else{
+                        walkCycle_length = walkAccData.size();
+                        walkAccDataAll.add(walkAccData);
+                        walkAccData.clear();
+                    }
+
+                }
+
                 accData.clear();
             }
         }
@@ -177,17 +246,18 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
         }
         chkTime++;
 
+
+
         String eulerAnglesStr =
-                String.format("%d", stepNum) + ", " +
-                        String.format("%.6f", freeAcc[0]) + ", " +
-                        String.format("%.6f", freeAcc[1]) + ", " +
-                        String.format("%.6f", freeAcc[2]);
+                        String.format("%d", stepNum) + ", " +
+                        String.format("%d", walkCycle_length) + ", " +
+                        String.format("%s", nowFoot) ;
         holder.orientationData.setText(eulerAnglesStr);
 
         String freeAccStr =
-                        String.format("%.6f", stepLength) + ", " +
-                        String.format("%.6f", debug_max[0]) + ", " +
-                        String.format("%.6f", debug_min[0]);
+                        String.format("%.6f", freeAcc[0]) + ", " +
+                        String.format("%.6f", freeAcc[1]) + ", " +
+                        String.format("%.6f", freeAcc[2]);
         holder.freeAccData.setText(freeAccStr);
 
     }
