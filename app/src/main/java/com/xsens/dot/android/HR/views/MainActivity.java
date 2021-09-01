@@ -248,8 +248,6 @@ public class MainActivity extends AppCompatActivity {
                 break;
 
             case R.id.action_streaming:
-            case R.id.bt_start:
-            case R.id.bt_stop:
                 // When the streaming button is clicked, notify to DataFragment and wait for the syncing result.
                 mStreamingListener.onStreamingTriggered();
                 break;

@@ -31,6 +31,7 @@
 
 package com.xsens.dot.android.HR.views;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -80,6 +81,8 @@ import static com.xsens.dot.android.HR.adapters.DataAdapter.KEY_ADDRESS;
 import static com.xsens.dot.android.HR.adapters.DataAdapter.KEY_DATA;
 import static com.xsens.dot.android.HR.adapters.DataAdapter.KEY_TAG;
 import static com.xsens.dot.android.HR.adapters.DataAdapter.grphdata;
+import static com.xsens.dot.android.HR.adapters.DataAdapter.stepNum;
+import static com.xsens.dot.android.HR.adapters.DataAdapter.timeData;
 import static com.xsens.dot.android.HR.views.MainActivity.FRAGMENT_TAG_DATA;
 import static com.xsens.dot.android.sdk.models.XsensDotDevice.LOG_STATE_ON;
 import static com.xsens.dot.android.sdk.models.XsensDotDevice.PLOT_STATE_ON;
@@ -387,6 +390,26 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
 
             String tag = device.getTag().isEmpty() ? device.getName() : device.getTag();
 
+            Log.d(TAG, "createGraphFiles() - stepNum = " + stepNum);
+
+            double sum = 0.0;
+            for (int i = 0; i < stepNum; i++) {
+                Log.d(TAG, "createGraphFiles() - timeData = " + timeData.get(i));
+                sum += timeData.get(i);
+            }
+
+            double ave = sum / stepNum;
+
+            double devsum = 0.0;
+            for (int i = 0; i < stepNum; i++) {
+                devsum += Math.pow(timeData.get(i) - ave, 2);
+            }
+
+            double variance = devsum / stepNum;
+
+            @SuppressLint("DefaultLocale") String s = String.format("%.3f", Math.sqrt(variance));
+            Log.d(TAG, "createGraphFiles() - Standard Deviation = " + s);
+
             if (getContext() != null) {
 
                 // Store log file in app internal folder.
@@ -412,7 +435,7 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
 
             try {
                 FileWriter outputWriter = new FileWriter(outputFile, true);
-                outputWriter.append(grphdata).append("\n");
+                outputWriter.append(grphdata).append(", ").append(s).append("\n");
                 outputWriter.close();
 
             } catch (IOException e) {
@@ -420,9 +443,6 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
             }
 
         }
-
-        Log.d(TAG, "createGraphFiles() - " + grfilename);
-
     }
 
     /**

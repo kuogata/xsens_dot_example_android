@@ -102,13 +102,13 @@ public class GraphFragment extends Fragment {
         // レーダーチャート 描画エリアの設定
         RadarChart = view.findViewById(R.id.RadarChart);
         RadarChart.setBackgroundColor(Color.rgb(245, 245, 245));
-        //RadarChart.setBackgroundColor(Color.WHITE); // グラフエリアの背景色
-        RadarChart.getDescription().setEnabled(false);  // 説明テキストの表示
-        RadarChart.setWebLineWidth(1f);             // ウェブラインの軸の太さ
-        RadarChart.setWebColor(Color.LTGRAY);       // ウェブラインの軸の色
-        RadarChart.setWebLineWidthInner(1f);        // ウェブラインの幅の線
-        RadarChart.setWebColorInner(Color.LTGRAY);  // ウェブラインの幅の線の色
-        RadarChart.setWebAlpha(100);                // ウェブラインの透明度 デフォルト=150, 0=100%透明
+        //RadarChart.setBackgroundColor(Color.WHITE);       // グラフエリアの背景色
+        RadarChart.getDescription().setEnabled(false);      // 説明テキストの表示
+        RadarChart.setWebLineWidth(1f);                     // ウェブラインの軸の太さ
+        RadarChart.setWebColor(Color.LTGRAY);               // ウェブラインの軸の色
+        RadarChart.setWebLineWidthInner(1f);                // ウェブラインの幅の線
+        RadarChart.setWebColorInner(Color.LTGRAY);          // ウェブラインの幅の線の色
+        RadarChart.setWebAlpha(100);                        // ウェブラインの透明度 デフォルト=150, 0=100%透明
 
         // 表示データの取得とスタイル設定
         setData();
@@ -118,12 +118,11 @@ public class GraphFragment extends Fragment {
 
         // X軸設定
         XAxis xAxis = RadarChart.getXAxis();
-        xAxis.setTextSize(10f);  // Xラベルのテキストサイズ
-        xAxis.setYOffset(0f);   // ?
-        xAxis.setXOffset(0f);   // ?
+        xAxis.setTextSize(10f);     // Xラベルのテキストサイズ
+        xAxis.setYOffset(0f);       // ?
+        xAxis.setXOffset(0f);       // ?
         xAxis.setValueFormatter(new ValueFormatter() {
-            //private final String[] paramLabel = new String[]{"Label1", "Label2", "Label3", "Label4", "Label5"}; // 各軸のラベル名
-            private final String[] paramLabel = new String[]{"HR", "Steps", "StepLength", "Label4", "Label5"}; // 各軸のラベル名
+            private final String[] paramLabel = new String[]{"HR", "歩行速度", "再現性"}; // 各軸のラベル名
 
             @Override
             public String getAxisLabel(float value, AxisBase axis) {
@@ -134,33 +133,31 @@ public class GraphFragment extends Fragment {
 
         // Y軸設定
         YAxis yAxis = RadarChart.getYAxis();
-        yAxis.setLabelCount(5, false);  // ラベルの数(幅の線の数)
-        yAxis.setTextSize(9f);                      // Yラベルのテキストサイズ
-        yAxis.setAxisMinimum(0f);                   // Y軸の最小値
-        yAxis.setAxisMaximum(80f);                  // Y軸の最大値
-        yAxis.setDrawLabels(false);                 // Y軸のラベル表示
+        yAxis.setLabelCount(5, false);      // ラベルの数(幅の線の数)
+        yAxis.setTextSize(9f);                          // Yラベルのテキストサイズ
+        yAxis.setAxisMinimum(0f);                       // Y軸の最小値
+        yAxis.setAxisMaximum(80f);                      // Y軸の最大値
+        yAxis.setDrawLabels(true);                      // Y軸のラベル表示
 
         // 凡例設定
-        Legend l = RadarChart.getLegend();                                  // 凡例
-        l.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);      // 表示位置（縦）
-        l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);  // 表示位置（横）
-        l.setOrientation(Legend.LegendOrientation.VERTICAL);              // 複数個表示する場合の表示位置
-        l.setDrawInside(false);                                             // 内側に表示するか
-        l.setXEntrySpace(7f);                                              // 横の間隔
-        l.setYEntrySpace(5f);                                               // 縦の間隔？
-        l.setTextColor(Color.BLUE);                                         // テキストの色
+        Legend l = RadarChart.getLegend();                                      // 凡例
+        l.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);             // 表示位置（縦）
+        l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);      // 表示位置（横）
+        l.setOrientation(Legend.LegendOrientation.VERTICAL);                    // 複数個表示する場合の表示位置
+        l.setDrawInside(false);                                                 // 内側に表示するか
+        l.setXEntrySpace(7f);                                                   // 横の間隔
+        l.setYEntrySpace(5f);                                                   // 縦の間隔？
+        l.setTextColor(Color.BLUE);                                             // テキストの色
     }
 
     private void setData() {
 
-        float mul = 80;
-        float min = 20;
         long cnt = 0;
         String entry1 = "今回";
         String entry2 = "前回";
 
-        ArrayList<RadarEntry> entries1 = new ArrayList<>();
-        ArrayList<RadarEntry> entries2 = new ArrayList<>();
+        ArrayList<RadarEntry> entries1 = new ArrayList<>();     // 今回
+        ArrayList<RadarEntry> entries2 = new ArrayList<>();     // 前回
 
         File dir = Objects.requireNonNull(getContext()).getExternalFilesDir(null);
         assert dir != null;
@@ -177,27 +174,32 @@ public class GraphFragment extends Fragment {
             while ((line = br.readLine()) != null) {
                 cnt ++;
                 String[] values = line.split(",");
-                String datetime = values[0];
-                float hr = Float.parseFloat(values[1]);
-                float steps = Float.parseFloat(values[2]);
-                double steplength = Double.parseDouble(values[3]);
+                String datetime = values[0];                        // 0 : datetime
+                float hr = Float.parseFloat(values[1]);             // 1 : HR
+                float steps = Float.parseFloat(values[2]);          // 2 : 歩数(仮)
+                double steplength = Double.parseDouble(values[3]);  // 3 : 歩幅(仮)
+                float sd = Float.parseFloat(values[4]);             // 4 : 再現性(標準偏差)
 
                 if (cnt == lineCount){
+                    hr = (float) 3.05;  // test data
                     entry1 = datetime;
                     entries1.add(new RadarEntry(hr*10));
-                    entries1.add(new RadarEntry(steps));
-                    entries1.add(new RadarEntry((float) (steplength*0.1)));
-                    entries1.add(new RadarEntry(hr));   // test data
-                    entries1.add(new RadarEntry(steps*2/3));    // test data
+                    entries1.add(new RadarEntry(steps*2));
+                    entries1.add(new RadarEntry(sd/10));
+                    //entries1.add(new RadarEntry((float) (steplength*0.1)));
+                    //entries1.add(new RadarEntry(hr*8));   // test data
+                    //entries1.add(new RadarEntry(steps*2/3));    // test data
                 }
 
                 if (cnt == lineCount - 1 ){
+                    hr = (float) 4.26;  // test data
                     entry2 = datetime;
                     entries2.add(new RadarEntry(hr*10));
-                    entries2.add(new RadarEntry(steps));
-                    entries2.add(new RadarEntry((float) (steplength*0.1)));
-                    entries2.add(new RadarEntry(hr*2)); // test data
-                    entries2.add(new RadarEntry(steps*2/3));    // testdata
+                    entries2.add(new RadarEntry(steps*2));
+                    entries2.add(new RadarEntry(sd/10));
+                    //entries2.add(new RadarEntry((float) (steplength*0.1)));
+                    //entries2.add(new RadarEntry(hr*8)); // test data
+                    //entries2.add(new RadarEntry(steps*2/3));    // testdata
                 }
             }
         } catch (IOException e) {

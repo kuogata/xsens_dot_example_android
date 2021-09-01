@@ -77,7 +77,7 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
     //
     private static float[] accX_series = new float[5];
     private int preStepNum = 0;
-    private int stepNum = 0;
+    public static int stepNum = 0;
     private int chkTime = 1000;
     private float stepLength = 0f;
     private int dataSize = 0;
@@ -94,6 +94,11 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
         float z;
     }
 
+    private long startTime = System.currentTimeMillis();
+    private long endTime = 0;
+    private double dt = 0;
+    private boolean timeFlg = true;
+    public static ArrayList<Double> timeData = new ArrayList<>();
     public static String grphdata = "";
 
     /**
@@ -143,6 +148,11 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
         accX_series[3] = accX_series[4];
         accX_series[4] = accV[2];
 
+        if (timeFlg) {
+            startTime = System.currentTimeMillis();
+            timeFlg = false;
+        }
+
         if(chkTime > 15){ //about 0.25 sec
             /*if(detectMaxim(accX_series,5f,15f)) {
                 stepNum++;
@@ -166,6 +176,13 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
                 stepNum++;
                 chkTime = 0;
 
+                if (preStepNum != stepNum) {
+                    endTime = System.currentTimeMillis();
+                    //dt = ((endTime - startTime) * 0.001);  // 秒
+                    dt = endTime - startTime;     // ミリ秒
+                    timeData.add(dt);
+                }
+
                 int accL = accData.size();
                 float[] accV_buf = new float[accL];
                 for(int i=0;i<accL;i++){
@@ -183,6 +200,8 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
 
                 accDataAll.add(accData);
                 accData.clear();
+
+                startTime = endTime;
             }
         }
 
@@ -230,7 +249,7 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
         }
     }
 
-    private class SavingThread extends Thread {
+    private static class SavingThread extends Thread {
         String str;
         public SavingThread(String str) {
             this.str = str;
