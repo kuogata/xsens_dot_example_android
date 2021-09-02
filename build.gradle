@@ -22,6 +22,7 @@ allprojects {
         google()
         mavenCentral()
         jcenter()
+        maven { url 'https://jitpack.io' }
 
         // Add local libs repo
         // If do not add this, when use our SDK, it will show ERROR: Failed to resolve: :XsensDotSdk:

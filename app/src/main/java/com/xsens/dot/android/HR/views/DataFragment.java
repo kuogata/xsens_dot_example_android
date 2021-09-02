@@ -31,6 +31,7 @@
 
 package com.xsens.dot.android.HR.views;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -63,6 +64,11 @@ import com.xsens.dot.android.sdk.models.XsensDotSyncManager;
 import com.xsens.dot.android.sdk.utils.XsensDotLogger;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -74,6 +80,9 @@ import java.util.Map;
 import static com.xsens.dot.android.HR.adapters.DataAdapter.KEY_ADDRESS;
 import static com.xsens.dot.android.HR.adapters.DataAdapter.KEY_DATA;
 import static com.xsens.dot.android.HR.adapters.DataAdapter.KEY_TAG;
+import static com.xsens.dot.android.HR.adapters.DataAdapter.grphdata;
+import static com.xsens.dot.android.HR.adapters.DataAdapter.stepNum;
+import static com.xsens.dot.android.HR.adapters.DataAdapter.timeData;
 import static com.xsens.dot.android.HR.views.MainActivity.FRAGMENT_TAG_DATA;
 import static com.xsens.dot.android.sdk.models.XsensDotDevice.LOG_STATE_ON;
 import static com.xsens.dot.android.sdk.models.XsensDotDevice.PLOT_STATE_ON;
@@ -113,6 +122,12 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
 
     // A dialog during the synchronization
     private AlertDialog mSyncingDialog;
+
+    // A steps and steplength and HR data save file
+    public static String hrfilename = "";
+
+    // Graph data file
+    private String grfilename = "";
 
     /**
      * Get the instance of DataFragment
@@ -206,6 +221,8 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
             XsensDotSyncManager.getInstance(this).stopSyncing();
 
             closeFiles();
+
+            createGraphFiles();
 
         } else {
             // To start.
@@ -330,6 +347,105 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
     }
 
     /**
+     * Create HR data logger for each sensor.
+     */
+    private void createHRFiles() {
+
+        ArrayList<XsensDotDevice> devices = mSensorViewModel.getAllSensors();
+
+        for (XsensDotDevice device : devices) {
+
+            String tag = device.getTag().isEmpty() ? device.getName() : device.getTag();
+
+            if (getContext() != null) {
+
+                // Store log file in app internal folder.
+                // Don't need user to granted the storage permission.
+                File dir = getContext().getExternalFilesDir(null);
+
+                if (dir != null) {
+
+                    // steps and step length and HR , saving file name
+                    hrfilename = dir.getAbsolutePath() +
+                            File.separator +
+                            tag + "_steps_" +
+                            new SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.getDefault()).format(new Date()) +
+                            ".csv";
+                }
+            }
+        }
+
+        Log.d(TAG, "createFiles() - " + hrfilename);
+
+    }
+
+    /**
+     * Create Graph data file for Reader Chart.
+     */
+    private void createGraphFiles() {
+
+        ArrayList<XsensDotDevice> devices = mSensorViewModel.getAllSensors();
+
+        for (XsensDotDevice device : devices) {
+
+            String tag = device.getTag().isEmpty() ? device.getName() : device.getTag();
+
+            Log.d(TAG, "createGraphFiles() - stepNum = " + stepNum);
+
+            double sum = 0.0;
+            for (int i = 0; i < stepNum; i++) {
+                Log.d(TAG, "createGraphFiles() - timeData = " + timeData.get(i));
+                sum += timeData.get(i);
+            }
+
+            double ave = sum / stepNum;
+
+            double devsum = 0.0;
+            for (int i = 0; i < stepNum; i++) {
+                devsum += Math.pow(timeData.get(i) - ave, 2);
+            }
+
+            double variance = devsum / stepNum;
+
+            @SuppressLint("DefaultLocale") String s = String.format("%.3f", Math.sqrt(variance));
+            Log.d(TAG, "createGraphFiles() - Standard Deviation = " + s);
+
+            if (getContext() != null) {
+
+                // Store log file in app internal folder.
+                // Don't need user to granted the storage permission.
+                File dir = getContext().getExternalFilesDir(null);
+                // graph file
+                //grfilename = dir.getAbsolutePath() + File.separator + tag + "_" + "graphdata.csv";
+                grfilename = dir.getAbsolutePath() + File.separator + "graphdata.csv";
+                Path path = Paths.get(grfilename);
+                File file = new File(grfilename);
+
+                if (!file.exists()) {
+                    try {
+                        Files.createFile(path);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+
+            File outputFile = new File(grfilename);
+
+            try {
+                FileWriter outputWriter = new FileWriter(outputFile, true);
+                outputWriter.append(grphdata).append(", ").append(s).append("\n");
+                outputWriter.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+    /**
      * Update data to specific file.
      *
      * @param address The mac address of device
@@ -428,7 +544,14 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
                             mSensorViewModel.setMeasurementMode(PAYLOAD_TYPE_COMPLETE_QUATERNION);
                             //mSensorViewModel.setMeasurementMode(PAYLOAD_TYPE_COMPLETE_EULER);
 
-                            createFiles();
+                            // Create Xsens Dot Default Log File
+                            //createFiles();
+
+                            // create HR Log File
+                            createHRFiles();
+
+                            // create Graph data File
+                            //createGraphFiles();
 
                             mSensorViewModel.setMeasurement(true);
                             // Notify the current streaming status to MainActivity to refresh the menu.

@@ -13,6 +13,8 @@
     <string name="menu_start_streaming">Start</string>
     <string name="menu_stop_streaming">Stop</string>
     <string name="menu_measure">Measure</string>
+    <string name="menu_graph">Graph</string>
+    <string name="menu_close">Close</string>
 
     <string name="disconnected">Disconnected</string>
     <string name="connecting">Connecting</string>
@@ -25,6 +27,7 @@
     <string name="sync_result_success">Success</string>
     <string name="sync_result_fail">Fail</string>
     <string name="mode_complete_euler">Complete (Euler)</string>
+    <string name="mode_complete_quat">Complete (Quaternion)</string>
     <string name="name">Name:</string>
     <string name="orientation">Orientation (deg):</string>
     <string name="free_acc">Free Acceleration (m/s2):</string>
