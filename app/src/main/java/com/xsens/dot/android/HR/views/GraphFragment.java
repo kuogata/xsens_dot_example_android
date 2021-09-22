@@ -2,6 +2,7 @@ package com.xsens.dot.android.HR.views;
 
 import androidx.lifecycle.ViewModelProvider;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -14,6 +15,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.github.mikephil.charting.charts.RadarChart;
 import com.github.mikephil.charting.animation.Easing;
 import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.Legend;
@@ -25,7 +27,7 @@ import com.github.mikephil.charting.data.RadarEntry;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.interfaces.datasets.IRadarDataSet;
 import com.xsens.dot.android.HR.R;
-import com.xsens.dot.android.HR.databinding.FragmentDataBinding;
+import com.xsens.dot.android.HR.databinding.FragmentGraphBinding;
 import com.xsens.dot.android.HR.viewmodels.GraphViewModel;
 
 import java.io.BufferedReader;
@@ -36,7 +38,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Objects;
 
 import static com.xsens.dot.android.HR.views.MainActivity.FRAGMENT_TAG_GRAPH;
 
@@ -45,13 +46,10 @@ public class GraphFragment extends Fragment {
     private static final String TAG = GraphFragment.class.getSimpleName();
 
     // The view binder of DataFragment
-    private FragmentDataBinding mBinding;
-
-    // The devices view model instance
-    private GraphViewModel mGraphViewModel;
+    private FragmentGraphBinding mBinding;
 
     // RadarChart library
-    private com.github.mikephil.charting.charts.RadarChart RadarChart;
+    private RadarChart mRadarChart;
 
     /**
      * Get the instance of DataFragment
@@ -70,17 +68,25 @@ public class GraphFragment extends Fragment {
     }
 
     @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
 
-        return inflater.inflate(R.layout.fragment_graph, container, false);
+        mBinding = FragmentGraphBinding.inflate(LayoutInflater.from(getContext()));
+        return mBinding.getRoot();
+        //return inflater.inflate(R.layout.fragment_graph, container, false);
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mGraphViewModel = new ViewModelProvider(this).get(GraphViewModel.class);
+        // The devices view model instance
+        GraphViewModel mGraphViewModel = new ViewModelProvider(this).get(GraphViewModel.class);
     }
 
     @Override
@@ -100,24 +106,24 @@ public class GraphFragment extends Fragment {
         //setTitle("RadarChart random_data");
 
         // レーダーチャート 描画エリアの設定
-        RadarChart = view.findViewById(R.id.RadarChart);
-        RadarChart.setBackgroundColor(Color.rgb(245, 245, 245));
+        mRadarChart = view.findViewById(R.id.RadarChart);
+        mRadarChart.setBackgroundColor(Color.rgb(245, 245, 245));
         //RadarChart.setBackgroundColor(Color.WHITE);       // グラフエリアの背景色
-        RadarChart.getDescription().setEnabled(false);      // 説明テキストの表示
-        RadarChart.setWebLineWidth(1f);                     // ウェブラインの軸の太さ
-        RadarChart.setWebColor(Color.LTGRAY);               // ウェブラインの軸の色
-        RadarChart.setWebLineWidthInner(1f);                // ウェブラインの幅の線
-        RadarChart.setWebColorInner(Color.LTGRAY);          // ウェブラインの幅の線の色
-        RadarChart.setWebAlpha(100);                        // ウェブラインの透明度 デフォルト=150, 0=100%透明
+        mRadarChart.getDescription().setEnabled(false);      // 説明テキストの表示
+        mRadarChart.setWebLineWidth(1f);                     // ウェブラインの軸の太さ
+        mRadarChart.setWebColor(Color.LTGRAY);               // ウェブラインの軸の色
+        mRadarChart.setWebLineWidthInner(1f);                // ウェブラインの幅の線
+        mRadarChart.setWebColorInner(Color.LTGRAY);          // ウェブラインの幅の線の色
+        mRadarChart.setWebAlpha(100);                        // ウェブラインの透明度 デフォルト=150, 0=100%透明
 
         // 表示データの取得とスタイル設定
         setData();
 
         // 表示のアニメーション
-        RadarChart.animateXY(1400, 1400, Easing.EaseInOutQuad);
+        mRadarChart.animateXY(1400, 1400, Easing.EaseInOutQuad);
 
         // X軸設定
-        XAxis xAxis = RadarChart.getXAxis();
+        XAxis xAxis = mRadarChart.getXAxis();
         xAxis.setTextSize(10f);     // Xラベルのテキストサイズ
         xAxis.setYOffset(0f);       // ?
         xAxis.setXOffset(0f);       // ?
@@ -132,7 +138,7 @@ public class GraphFragment extends Fragment {
         xAxis.setTextColor(Color.BLACK);    // ラベルの文字色
 
         // Y軸設定
-        YAxis yAxis = RadarChart.getYAxis();
+        YAxis yAxis = mRadarChart.getYAxis();
         yAxis.setLabelCount(5, false);      // ラベルの数(幅の線の数)
         yAxis.setTextSize(9f);                          // Yラベルのテキストサイズ
         yAxis.setAxisMinimum(0f);                       // Y軸の最小値
@@ -140,7 +146,7 @@ public class GraphFragment extends Fragment {
         yAxis.setDrawLabels(true);                      // Y軸のラベル表示
 
         // 凡例設定
-        Legend l = RadarChart.getLegend();                                      // 凡例
+        Legend l = mRadarChart.getLegend();                                      // 凡例
         l.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);             // 表示位置（縦）
         l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);      // 表示位置（横）
         l.setOrientation(Legend.LegendOrientation.VERTICAL);                    // 複数個表示する場合の表示位置
@@ -150,6 +156,7 @@ public class GraphFragment extends Fragment {
         l.setTextColor(Color.BLUE);                                             // テキストの色
     }
 
+    @SuppressLint({"DefaultLocale", "SetTextI18n"})
     private void setData() {
 
         long cnt = 0;
@@ -159,7 +166,7 @@ public class GraphFragment extends Fragment {
         ArrayList<RadarEntry> entries1 = new ArrayList<>();     // 今回
         ArrayList<RadarEntry> entries2 = new ArrayList<>();     // 前回
 
-        File dir = Objects.requireNonNull(getContext()).getExternalFilesDir(null);
+        File dir = requireContext().getExternalFilesDir(null);
         assert dir != null;
         String grfilename = dir.getAbsolutePath() + File.separator + "graphdata.csv";
         Path path = Paths.get(grfilename);
@@ -181,25 +188,35 @@ public class GraphFragment extends Fragment {
                 float sd = Float.parseFloat(values[4]);             // 4 : 再現性(標準偏差)
 
                 if (cnt == lineCount){
-                    hr = (float) 3.05;  // test data
                     entry1 = datetime;
-                    entries1.add(new RadarEntry(hr*10));
+                    entries1.add(new RadarEntry(hr));
                     entries1.add(new RadarEntry(steps*2));
                     entries1.add(new RadarEntry(sd/10));
-                    //entries1.add(new RadarEntry((float) (steplength*0.1)));
-                    //entries1.add(new RadarEntry(hr*8));   // test data
-                    //entries1.add(new RadarEntry(steps*2/3));    // test data
+
+                    mBinding.curVal.setText(datetime);
+                    mBinding.hrValue1.setText(String.format("%.2f", hr));
+                    mBinding.repValue1.setText(String.format("%.2f", sd));
+                    mBinding.speedValue1.setText(String.format("%.2f", steps));
                 }
 
-                if (cnt == lineCount - 1 ){
-                    hr = (float) 4.26;  // test data
-                    entry2 = datetime;
-                    entries2.add(new RadarEntry(hr*10));
-                    entries2.add(new RadarEntry(steps*2));
-                    entries2.add(new RadarEntry(sd/10));
-                    //entries2.add(new RadarEntry((float) (steplength*0.1)));
-                    //entries2.add(new RadarEntry(hr*8)); // test data
-                    //entries2.add(new RadarEntry(steps*2/3));    // testdata
+                if (lineCount == 1) {
+                    mBinding.preVal.setText("-");
+                    mBinding.hrValue2.setText("-");
+                    mBinding.repValue2.setText("-");
+                    mBinding.speedValue2.setText("-");
+                }
+                else {
+                    if (cnt == lineCount - 1 ){
+                        entry2 = datetime;
+                        entries2.add(new RadarEntry(hr));
+                        entries2.add(new RadarEntry(steps*2));
+                        entries2.add(new RadarEntry(sd/10));
+
+                        mBinding.preVal.setText(datetime);
+                        mBinding.hrValue2.setText(String.format("%.2f", hr));
+                        mBinding.repValue2.setText(String.format("%.2f", sd));
+                        mBinding.speedValue2.setText(String.format("%.2f", steps));
+                    }
                 }
             }
         } catch (IOException e) {
@@ -237,8 +254,8 @@ public class GraphFragment extends Fragment {
         data.setDrawValues(true);               // 値の表示
         data.setValueTextColor(Color.DKGRAY);   // 値の表示色
 
-        RadarChart.setData(data);   // sets data & also calls notifyDataSetChanged()
-        RadarChart.invalidate();    // refreshes chart
+        mRadarChart.setData(data);   // sets data & also calls notifyDataSetChanged()
+        mRadarChart.invalidate();    // refreshes chart
     }
 
 }

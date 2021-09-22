@@ -43,6 +43,15 @@ dependencies {
     // Import Xsens DOT SDK
     implementation(name: 'XsensDotCore', ext: 'aar')
 
-    // Chart library
+    /* MPAndroidChart Library
+     * https://github.com/PhilJay/MPAndroidChart     */
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+
+    /* PulseCountDownView Library
+     * https://github.com/gusakovgiorgi/PulseCountDownView     */
+    implementation 'com.gusakov:pulse-countdown:1.1.0-rc1'
+
+    /* Number Picker Library
+     * https://github.com/ShawnLin013/NumberPicker     */
+    implementation 'io.github.ShawnLin013:number-picker:2.4.13'
 }

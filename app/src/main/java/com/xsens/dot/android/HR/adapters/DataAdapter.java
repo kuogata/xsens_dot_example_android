@@ -80,15 +80,15 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
     private ArrayList<HashMap<String, Object>> mDataList;
 
     //
-    private static float[] accX_series = new float[5];
+    private static final float[] accX_series = new float[5];
     private int preStepNum = 0;
     public static int stepNum = 0;
     private int chkTime = 1000;
     private float stepLength = 0f;
     private int dataSize = 0;
-    private float debug_max[] = {0f};
-    private float debug_min[] = {0f};
-    private static float[] disX_series = new float[5];
+    private final float[] debug_max = {0f};
+    private final float[] debug_min = {0f};
+    private static final float[] disX_series = new float[5];
 
     float intYacc = 0.0f;
     String nowFoot = null;
@@ -100,15 +100,15 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
     ArrayList<ArrayList<threeAxis>> accDataAll = new ArrayList<ArrayList<threeAxis>>();
 
     ArrayList<threeAxis> walkAccData = new ArrayList<threeAxis>();
-    ArrayList<ArrayList<threeAxis>> walkAccDataAll = new ArrayList<ArrayList<threeAxis>>();
+    public static final ArrayList<ArrayList<threeAxis>> walkAccDataAll = new ArrayList<ArrayList<threeAxis>>();
 
     //Vector<Vector<threeAxis>> accDataAll = new Vector<Vector<threeAxis>>();
     //Vector<threeAxis> accData = new Vector<threeAxis>();
 
-    class threeAxis{
-        float x;
-        float y;
-        float z;
+    public static class threeAxis{
+        public float x;
+        public float y;
+        public float z;
     }
 
     private long startTime = System.currentTimeMillis();
@@ -323,7 +323,7 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
                         supportFoot = "right";
                     }*/
 
-                    if(walkEvent == false){
+                    if(!walkEvent){
                         walkEvent = true;
                     }
                     else{
@@ -381,19 +381,22 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
 
             String str = String.format("%s", datetime) + ", " +
                     String.format("%d", stepNum) + ", " +
-                    String.format("%.6f", stepLength) + ", " +
-                    String.format("%d", walkCycle_length) + ", " +
+//                    String.format("%.6f", stepLength) + ", " +
+//                    String.format("%d", walkCycle_length) + ", " +
+                    String.format("%f", HR_result[0]) + ", " +
+                    String.format("%f", HR_result[1]) + ", " +
+                    String.format("%f", HR_result[2]) + ", " +
                     String.format("%s", nowFoot) + ", " +
-                    String.format("%.6f", freeAcc[0]) + ", " +
-                    String.format("%.6f", freeAcc[1]) + ", " +
-                    String.format("%.6f", freeAcc[2]);
+                    String.format("%.6f", accV[0]) + ", " +
+                    String.format("%.6f", accV[1]) + ", " +
+                    String.format("%.6f", accV[2]);
 
             Log.i(TAG, "steps - str = " + str);
 
             new SavingThread(str).start();
 
             grphdata = String.format("%s", datetime) + ", " +
-                    "3.05, " +      // HR
+                    String.format("%f", HR_result[0]) + ", " +      // HR
                     String.format("%d", stepNum) + ", " +
                     String.format("%.6f", stepLength);
 
