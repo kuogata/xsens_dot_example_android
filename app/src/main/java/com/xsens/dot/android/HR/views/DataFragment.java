@@ -86,7 +86,6 @@ import static com.xsens.dot.android.HR.adapters.DataAdapter.timeData;
 import static com.xsens.dot.android.HR.views.MainActivity.FRAGMENT_TAG_DATA;
 import static com.xsens.dot.android.sdk.models.XsensDotDevice.LOG_STATE_ON;
 import static com.xsens.dot.android.sdk.models.XsensDotDevice.PLOT_STATE_ON;
-import static com.xsens.dot.android.sdk.models.XsensDotPayload.PAYLOAD_TYPE_COMPLETE_EULER;
 import static com.xsens.dot.android.sdk.models.XsensDotPayload.PAYLOAD_TYPE_COMPLETE_QUATERNION;
 
 /**
@@ -125,6 +124,7 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
 
     // A steps and steplength and HR data save file
     public static String hrfilename = "";
+
 
     // Graph data file
     private String grfilename = "";

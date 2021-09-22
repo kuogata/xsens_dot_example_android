@@ -45,16 +45,21 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.xsens.dot.android.HR.R;
 import com.xsens.dot.android.sdk.events.XsensDotData;
 
+import org.jtransforms.fft.DoubleFFT_1D;
+
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
-import java.util.Vector;
 
 import static com.xsens.dot.android.HR.views.DataFragment.hrfilename;
 
@@ -113,6 +118,15 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
     public static ArrayList<Double> timeData = new ArrayList<>();
     public static String grphdata = "";
 
+    int FFT_SIZE = 20;
+    int ANALYSIS_DATA_SIZE = 101;
+    int PCA_DATA_SIZE = 17;
+
+    private float[][] PCA_MATRIX;
+    private float[] LM_COEFFICIENTS;
+
+    float[] HR_result = new float[3];
+
     /**
      * Default constructor.
      *
@@ -123,6 +137,58 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
 
         mContext = context;
         mDataList = dataList;
+
+        PCA_MATRIX = new float[ANALYSIS_DATA_SIZE*3][PCA_DATA_SIZE];
+        LM_COEFFICIENTS = new float[PCA_DATA_SIZE+1];
+
+        try {
+            LM_COEFFICIENTS[0] = 1.34912883911447f;
+            LM_COEFFICIENTS[1] = -0.0487452870771206f;
+            LM_COEFFICIENTS[2] = 0.127465027068761f;
+            LM_COEFFICIENTS[3] = 0.050801659397906f;
+            LM_COEFFICIENTS[4] = -0.00337089188096662f;
+            LM_COEFFICIENTS[5] = 0.00895374117831713f;
+            LM_COEFFICIENTS[6] = 0.0141840734605453f;
+            LM_COEFFICIENTS[7] = -0.00805168813337192f;
+            LM_COEFFICIENTS[8] = 0.0174030442458897f;
+            LM_COEFFICIENTS[9] = -0.0182085079393274f;
+            LM_COEFFICIENTS[10] = 0.0117300501853723f;
+            LM_COEFFICIENTS[11] = -0.0148210165528988f;
+            LM_COEFFICIENTS[12] = -0.0105962483101206f;
+            LM_COEFFICIENTS[13] = 0.0117463885717435f;
+            LM_COEFFICIENTS[14] = -0.00359027104477415f;
+            LM_COEFFICIENTS[15] = 0.0113971954047659f;
+            LM_COEFFICIENTS[16] = -0.0103477801155749f;
+            LM_COEFFICIENTS[17] = 0.00575515971645595f;
+
+
+            File dir = context.getExternalFilesDir(null);
+            String parafilename = dir.getAbsolutePath() + File.separator + "Export_Rotation_non.csv";
+            File pfile = new File(parafilename);
+            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(pfile),"UTF-8"));
+            String line = br.readLine();
+
+            int i = 0;
+            while (line != null){
+                String[] data = line.split(",");
+                for(int j=0; j < PCA_DATA_SIZE; j++){
+                    PCA_MATRIX[i][j] = Float.parseFloat(data[j]);
+                }
+                line = br.readLine();
+                i++;
+            }
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        HR_result[0] = 0;
+        HR_result[1] = 0;
+        HR_result[2] = 0;
+
+
     }
 
     @NonNull
@@ -137,6 +203,8 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
     @SuppressLint("DefaultLocale")
     public void onBindViewHolder(@NonNull DataViewHolder holder, int position) {
 
+
+
         threeAxis accAxis = new threeAxis();
         String tag = (String) mDataList.get(position).get(KEY_TAG);
         XsensDotData xsData = (XsensDotData) mDataList.get(position).get(KEY_DATA);
@@ -148,8 +216,6 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
         float[] freeAcc = xsData.getFreeAcc();
         float[][] rotM = calcQuaternionRotationMatrix(quaternions);
         float[] accV = calcSensCoordinateAcc(rotM, freeAcc);
-
-
 
         accAxis.x = accV[0];
         accAxis.y = accV[1];
@@ -263,6 +329,21 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
                     else{
                         walkCycle_length = walkAccData.size();
                         walkAccDataAll.add(walkAccData);
+
+                        threeAxis bufData = new threeAxis();
+                        double[][] input = new double[3][walkCycle_length];
+
+                        for(int i=0; i < walkCycle_length; i++){
+                            bufData = walkAccData.get(i);
+                            input[0][i] = bufData.x;
+                            input[1][i] = bufData.y;
+                            input[2][i] = bufData.z;
+                        }
+
+                        HR_result[0] = calcHR(input[0]);
+                        HR_result[1] = calcHR(input[1]);
+                        HR_result[2] = calcHR(input[2]);
+
                         walkAccData.clear();
                     }
 
@@ -280,15 +361,18 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
 
         // display on UI
         String eulerAnglesStr =
+                        //String.format("%.6f", PCA_MATRIX[0][0]) + ", " +
                         String.format("%d", stepNum) + ", " +
-                        String.format("%d", walkCycle_length) + ", " +
+                        String.format("%f", HR_result[0]) + ", " +
+                                String.format("%f", HR_result[1]) + ", " +
+                                String.format("%f", HR_result[2]) + ", " +
                         String.format("%s", nowFoot) ;
         holder.orientationData.setText(eulerAnglesStr);
 
         String freeAccStr =
-                        String.format("%.6f", freeAcc[0]) + ", " +
-                        String.format("%.6f", freeAcc[1]) + ", " +
-                        String.format("%.6f", freeAcc[2]);
+                        String.format("%.6f", accV[0]) + ", " +
+                        String.format("%.6f", accV[1]) + ", " +
+                        String.format("%.6f", accV[2]);
         holder.freeAccData.setText(freeAccStr);
 
         // save to file
@@ -346,7 +430,87 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
         return mDataList == null ? 0 : mDataList.size();
     }
 
+    public float calcHR(double[] input){
 
+        double hr = 0f;
+        double even_harmonics = 0, odd_harmonics = 0;
+        double[] data = new double[FFT_SIZE];
+        double[] fft_data = new double[FFT_SIZE/2];
+        data = Arrays.copyOf(input, FFT_SIZE);
+
+        DoubleFFT_1D fft = new DoubleFFT_1D(FFT_SIZE);
+        fft.realForward(data);
+
+        for(int i=0, j=0; i < FFT_SIZE / 2 ; i+=2, j++){
+            fft_data[i/2] = Math.sqrt(Math.pow(data[i], 2) + Math.pow(data[i+1], 2));
+
+            if(j != 0){
+                if(j % 2 == 0){
+                    even_harmonics += fft_data[j];
+                }
+                else{
+                    odd_harmonics += fft_data[j];
+                }
+            }
+        }
+
+        hr = even_harmonics / (even_harmonics + odd_harmonics) * 100;
+
+        /*float[] hr_debug = new float[3];
+        hr_debug[0] = (float) even_harmonics;
+        hr_debug[1] = (float) odd_harmonics;
+        hr_debug[2] = (float) hr;*/
+
+        return (float)hr;
+    }
+
+    public int calcGCD(int a, int b){
+
+        int tmp = 0;
+
+        if(a > b){
+            tmp = a;
+            a = b;
+            b = tmp;
+        }
+        if(a == 0){
+            return b;
+        }
+
+        return  calcGCD(b%a, a);
+    }
+
+    public float[] setDataLength(int dataL, float[] data){
+        int gcdNum = calcGCD(dataL-1, (ANALYSIS_DATA_SIZE-1));
+        //check gcdNum == 0 ?
+        int lcmNum = (dataL-1) * (ANALYSIS_DATA_SIZE-1) / gcdNum;
+        int num_sep = lcmNum / (dataL-1);
+        int num_get = lcmNum / (ANALYSIS_DATA_SIZE-1);
+
+        float[] expandedData = new float[lcmNum];
+        float[] adjustedData = new float[ANALYSIS_DATA_SIZE];
+        int count = 0;
+
+        for(int i=0; i < (dataL-1); i++){
+            for(int k=0; k<num_sep; k++){
+                expandedData[count] = data[i] + (data[i+1] - data[i]) * k / num_sep;
+                count++;
+            }
+        }
+
+        for(int i=0; i < ANALYSIS_DATA_SIZE; i++){
+            adjustedData[i] = expandedData[1+(i-1)*num_get];
+        }
+
+        return adjustedData;
+    }
+
+    public float calcWalkVelocity(float[] data){
+        //とりま係数はベタ打ち
+
+
+        return 0.0f;
+    }
 
     public float[][] calcQuaternionRotationMatrix(float[] q){
         float[][] rotM = new float[3][3];
