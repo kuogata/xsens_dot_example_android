@@ -1,13 +1,199 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".views.GraphFragment">
+    android:paddingStart="16dp"
+    android:paddingTop="32dp"
+    android:paddingEnd="16dp"
+    tools:context=".views.MainActivity">
+
+    <LinearLayout
+        android:id="@+id/linearLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="-2dp"
+        tools:layout_editor_absoluteY="1dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/label"
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:text=""
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/curVal"
+                android:layout_width="90dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp"
+                android:background="#00A0E9"
+                android:gravity="center"
+                android:text="@string/tx_cur"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="@+id/label"
+                app:layout_constraintStart_toEndOf="@+id/label" />
+
+            <TextView
+                android:id="@+id/preVal"
+                android:layout_width="90dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp"
+                android:background="#DDA0DD"
+                android:gravity="center"
+                android:text="@string/tx_pre"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="@+id/label"
+                app:layout_constraintStart_toEndOf="@+id/label" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/hr_label"
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:text="@string/hr"
+                android:textStyle="bold"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/hr_value1"
+                android:layout_width="90dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp"
+                android:gravity="center"
+                android:text="@string/none"
+                app:layout_constraintBottom_toBottomOf="@+id/hr_label"
+                app:layout_constraintStart_toEndOf="@+id/hr_label" />
+
+            <TextView
+                android:id="@+id/hr_value2"
+                android:layout_width="90dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp"
+                android:gravity="center"
+                android:text="@string/none"
+                app:layout_constraintBottom_toBottomOf="@+id/hr_label"
+                app:layout_constraintStart_toEndOf="@+id/hr_label" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/rep_label"
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:text="@string/rep"
+                android:textStyle="bold"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintStart_toStartOf="@+id/hr_label"
+                app:layout_constraintTop_toBottomOf="@+id/hr_label" />
+
+            <TextView
+                android:id="@+id/rep_value1"
+                android:layout_width="90dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp"
+                android:gravity="center"
+                android:text="@string/none"
+                app:layout_constraintBottom_toBottomOf="@+id/rep_label"
+                app:layout_constraintStart_toEndOf="@+id/rep_label"
+                tools:ignore="HardcodedText" />
+
+            <TextView
+                android:id="@+id/rep_value2"
+                android:layout_width="90dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp"
+                android:gravity="center"
+                android:text="@string/none"
+                app:layout_constraintBottom_toBottomOf="@+id/rep_label"
+                app:layout_constraintStart_toEndOf="@+id/rep_label" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/speed_label"
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:text="@string/speed"
+                android:textStyle="bold"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintStart_toStartOf="@+id/rep_label"
+                app:layout_constraintTop_toBottomOf="@+id/rep_label" />
+
+            <TextView
+                android:id="@+id/speed_value1"
+                android:layout_width="90dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp"
+                android:gravity="center"
+                android:text="@string/none"
+                app:layout_constraintBottom_toBottomOf="@+id/speed_label"
+                app:layout_constraintStart_toEndOf="@+id/speed_label"
+                tools:ignore="HardcodedText" />
+
+            <TextView
+                android:id="@+id/speed_value2"
+                android:layout_width="90dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="4dp"
+                android:layout_marginRight="4dp"
+                android:gravity="center"
+                android:text="@string/none"
+                app:layout_constraintBottom_toBottomOf="@+id/speed_label"
+                app:layout_constraintStart_toEndOf="@+id/speed_label"
+                tools:ignore="HardcodedText" />
+
+        </LinearLayout>
+
+    </LinearLayout>
 
     <com.github.mikephil.charting.charts.RadarChart
         android:id="@+id/RadarChart"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_width="370dp"
+        android:layout_height="450dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/linearLayout"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout"
+        app:layout_constraintVertical_bias="0.45"
+        tools:ignore="MissingConstraints" />
 
-</FrameLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

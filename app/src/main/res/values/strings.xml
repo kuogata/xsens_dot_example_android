@@ -22,8 +22,8 @@
     <string name="reconnecting">Reconnecting</string>
     <string name="batt_state_charging">Charging</string>
     <string name="syncing">Syncing</string>
-    <string name="mode">Mode:</string>
-    <string name="sync_status">Sync status:</string>
+    <string name="mode">Mode :</string>
+    <string name="sync_status">Sync status :</string>
     <string name="sync_result_success">Success</string>
     <string name="sync_result_fail">Fail</string>
     <string name="mode_complete_euler">Complete (Euler)</string>
@@ -31,5 +31,14 @@
     <string name="name">Name:</string>
     <string name="orientation">Orientation (deg):</string>
     <string name="free_acc">Free Acceleration (m/s2):</string>
+    <string name="hr">ＨＲ　　　:</string>
+    <string name="rep">再現性　　:</string>
+    <string name="speed">歩行速度　:</string>
+    <string name="none">-</string>
+    <string name="tx_cur">今回</string>
+    <string name="tx_pre">前回</string>
+    <string name="time">10</string>
+    <string name="ok">設定</string>
+    <string name="timerlabel">歩行計測時間 : （初期値 10秒）</string>
 
 </resources>

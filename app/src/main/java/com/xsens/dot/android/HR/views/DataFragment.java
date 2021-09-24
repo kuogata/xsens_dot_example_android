@@ -49,6 +49,9 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.shawnlin.numberpicker.NumberPicker;
+import com.gusakov.library.PulseCountDown;
+import com.gusakov.library.java.interfaces.OnCountdownCompleted;
 import com.xsens.dot.android.HR.BuildConfig;
 import com.xsens.dot.android.HR.R;
 import com.xsens.dot.android.HR.adapters.DataAdapter;
@@ -83,6 +86,7 @@ import static com.xsens.dot.android.HR.adapters.DataAdapter.KEY_TAG;
 import static com.xsens.dot.android.HR.adapters.DataAdapter.grphdata;
 import static com.xsens.dot.android.HR.adapters.DataAdapter.stepNum;
 import static com.xsens.dot.android.HR.adapters.DataAdapter.timeData;
+import static com.xsens.dot.android.HR.adapters.DataAdapter.walkAccDataAll;
 import static com.xsens.dot.android.HR.views.MainActivity.FRAGMENT_TAG_DATA;
 import static com.xsens.dot.android.sdk.models.XsensDotDevice.LOG_STATE_ON;
 import static com.xsens.dot.android.sdk.models.XsensDotDevice.PLOT_STATE_ON;
@@ -126,8 +130,21 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
     public static String hrfilename = "";
 
 
-    // Graph data file
+    // The graph data file
     private String grfilename = "";
+
+    // The timer initialize value, default is 10 sec
+    private final int iniVal = 10;
+    private final int[] timerVal = { iniVal };
+
+    // The start button clicking flag
+    private boolean startIsClicking = false;
+
+    // PulseCountDownView Library
+    PulseCountDown mpulseCountDown;
+
+    // Number Picker Library
+    NumberPicker mNumberPicker;
 
     /**
      * Get the instance of DataFragment
@@ -168,6 +185,65 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
         mBinding.dataRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         mBinding.dataRecyclerView.setItemAnimator(new DefaultItemAnimator());
         mBinding.dataRecyclerView.setAdapter(mDataAdapter);
+
+        mNumberPicker = mBinding.timePicker.findViewById(R.id.time_picker);
+
+        // タイマー設定
+        mNumberPicker.setMaxValue(30);
+        mNumberPicker.setMinValue(10);
+        mNumberPicker.setWrapSelectorWheel(false);
+
+        // タイマー初期値 (10秒)
+        mNumberPicker.setValue(iniVal);
+        mBinding.timer.setText(String.valueOf(iniVal));
+
+        // 計測時間設定
+        mNumberPicker.setOnValueChangedListener(new NumberPicker.OnValueChangeListener() {
+            @Override
+            public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
+                timerVal[0] = newVal;
+                mBinding.timer.setText(String.valueOf(newVal));
+            }
+        });
+
+        // 計測時間設定後、OKボタンクリック
+        mBinding.btOk.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                timerVal[0] = mNumberPicker.getValue();
+                mBinding.timer.setText(String.valueOf(timerVal[0]));
+            }
+        });
+
+        // タイマー表示取得
+        mpulseCountDown = mBinding.timer.findViewById(R.id.timer);
+
+        // get the VIBRATOR_SERVICE system service
+        //final Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+
+        // スタートボタンクリック
+        mBinding.btStart.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onStreamingTriggered();
+                if (!startIsClicking) {
+                    startIsClicking = true;     // stop
+                } else {
+                    startIsClicking = false;    // start
+                }
+
+                /* For TEST : Countdown timer
+                mBinding.timer.setStartValue(timerVal[0]);
+                mBinding.timer.setEndValue(0);
+                Toast.makeText(getContext(), "スタート", Toast.LENGTH_SHORT).show();
+                pulseCountDown.start(new OnCountdownCompleted() {
+                    @Override
+                    public void completed() {
+                        Toast.makeText(getContext(), "ストップ", Toast.LENGTH_SHORT).show();
+                    }
+                });*/
+            }
+        });
 
         AlertDialog.Builder syncingDialogBuilder = new AlertDialog.Builder(getActivity());
         syncingDialogBuilder.setView(R.layout.dialog_syncing);
@@ -213,7 +289,7 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
     @Override
     public void onStreamingTriggered() {
 
-        if (mSensorViewModel.isStreaming().getValue()) {
+        if (mSensorViewModel.isStreaming().getValue() || startIsClicking) {
             // To stop.
             mSensorViewModel.setMeasurement(false);
             mSensorViewModel.updateStreamingStatus(false);
@@ -222,7 +298,11 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
 
             closeFiles();
 
+            chkWalkAccDataAll();
+
             createGraphFiles();
+
+            startIsClicking = false;
 
         } else {
             // To start.
@@ -242,6 +322,19 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
 
             if (!mSyncingDialog.isShowing()) mSyncingDialog.show();
         }
+    }
+
+    private void chkWalkAccDataAll() {
+
+        for (int i = 0; i < walkAccDataAll.size(); i++) {
+            Log.d("chkWalkAccDataAll", "walkAccDataAll[] = " + i);
+
+            for (int j = 0; j < walkAccDataAll.get(i).size(); j++) {
+                 DataAdapter.threeAxis axis = walkAccDataAll.get(i).get(j);
+                 Log.d("chkWalkAccDataAll", "axis = " + axis.x + ", " + axis.y + ", " + axis.z);
+            }
+        }
+
     }
 
     /**
@@ -392,22 +485,24 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
 
             Log.d(TAG, "createGraphFiles() - stepNum = " + stepNum);
 
+            // Reproducibility
             double sum = 0.0;
             for (int i = 0; i < stepNum; i++) {
                 Log.d(TAG, "createGraphFiles() - timeData = " + timeData.get(i));
                 sum += timeData.get(i);
             }
 
-            double ave = sum / stepNum;
+            double ave = sum / stepNum;     // Average for each step
 
             double devsum = 0.0;
             for (int i = 0; i < stepNum; i++) {
-                devsum += Math.pow(timeData.get(i) - ave, 2);
+                devsum += Math.pow(timeData.get(i) - ave, 2);       // Deviation Sum
             }
 
-            double variance = devsum / stepNum;
+            double variance = devsum / stepNum;     // 分散
 
-            @SuppressLint("DefaultLocale") String s = String.format("%.3f", Math.sqrt(variance));
+            @SuppressLint("DefaultLocale")
+            String s = String.format("%.3f", Math.sqrt(variance));      // Standard Deviation
             Log.d(TAG, "createGraphFiles() - Standard Deviation = " + s);
 
             if (getContext() != null) {
@@ -557,6 +652,17 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
                             // Notify the current streaming status to MainActivity to refresh the menu.
                             mSensorViewModel.updateStreamingStatus(true);
 
+                            // タイマー
+                            mBinding.timer.setStartValue(timerVal[0]);
+                            mBinding.timer.setEndValue(0);
+                            Toast.makeText(getContext(), "スタート", Toast.LENGTH_SHORT).show();
+                            mpulseCountDown.start(new OnCountdownCompleted() {
+                                @Override
+                                public void completed() {
+                                    Toast.makeText(getContext(), "ストップ", Toast.LENGTH_SHORT).show();
+                                    onStreamingTriggered();
+                                }
+                            });
                         } else {
 
                             mBinding.syncResult.setText(R.string.sync_result_fail);

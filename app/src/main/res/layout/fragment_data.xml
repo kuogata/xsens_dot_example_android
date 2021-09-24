@@ -48,44 +48,84 @@
         app:layout_constraintStart_toEndOf="@+id/sync_label"
         tools:ignore="HardcodedText" />
 
-    <Button
-        android:id="@+id/bt_start"
-        android:layout_width="72dp"
-        android:layout_height="44dp"
-        android:layout_marginStart="56dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginEnd="56dp"
-        android:layout_marginBottom="12dp"
-        android:text="@string/menu_start_streaming"
-        app:layout_constraintBottom_toTopOf="@+id/data_recycler_view"
-        app:layout_constraintEnd_toStartOf="@+id/bt_stop"
-        app:layout_constraintHorizontal_bias="0.854"
-        app:layout_constraintStart_toStartOf="parent"
+    <TextView
+        android:id="@+id/timer_label"
+        android:layout_width="110dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="16dp"
+        android:text="@string/timerlabel"
+        android:textStyle="bold"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/sync_label"
+        app:layout_constraintTop_toBottomOf="@+id/sync_label" />
+
+    <com.shawnlin.numberpicker.NumberPicker
+        android:id="@+id/time_picker"
+        android:layout_width="100dp"
+        android:layout_height="70dp"
+        android:layout_centerInParent="true"
+        android:layout_marginStart="32dp"
+        app:layout_constraintStart_toEndOf="@+id/timer_label"
         app:layout_constraintTop_toBottomOf="@+id/sync_result"
+        app:np_max="30"
+        app:np_min="10"
+        app:np_value="10"
+        app:np_selectedTextSize="28dp"
+        app:np_textSize="18dp"
+        app:np_wrapSelectorWheel="false"
         tools:ignore="MissingConstraints" />
 
     <Button
-        android:id="@+id/bt_stop"
-        android:layout_width="72dp"
-        android:layout_height="44dp"
-        android:layout_marginEnd="84dp"
-        android:text="@string/menu_stop_streaming"
-        app:layout_constraintBottom_toBottomOf="@+id/bt_start"
+        android:id="@+id/bt_ok"
+        android:layout_width="65dp"
+        android:layout_height="35dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="16dp"
+        android:text="@string/ok"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@+id/time_picker"
+        app:layout_constraintStart_toEndOf="@+id/time_picker"
+        tools:ignore="MissingConstraints" />
+
+    <com.gusakov.library.PulseCountDown
+        android:id="@+id/timer"
+        android:layout_width="126dp"
+        android:layout_height="123dp"
+        android:layout_marginTop="40dp"
+        android:gravity="center_horizontal"
+        android:textColor="#0540A8"
+        android:textSize="60sp"
+        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/bt_start"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/time_picker"
+        app:pc_endValue="0"
+        tools:ignore="MissingConstraints" />
+
+    <Button
+        android:id="@+id/bt_start"
+        android:layout_width="100dp"
+        android:layout_height="46dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginBottom="24dp"
+        android:text="@string/menu_start_streaming"
+        app:layout_constraintBottom_toTopOf="@+id/data_recycler_view"
+        app:layout_constraintStart_toStartOf="@+id/timer"
+        app:layout_constraintTop_toBottomOf="@+id/timer"
+        app:layout_constraintVertical_bias="0.74"
         tools:ignore="MissingConstraints" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/data_recycler_view"
-        android:layout_width="378dp"
-        android:layout_height="527dp"
-        android:layout_marginTop="16dp"
+        android:layout_width="352dp"
+        android:layout_height="375dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintHorizontal_bias="0.146"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/sync_result"
-        app:layout_constraintVertical_bias="0.72" />
+        app:layout_constraintTop_toBottomOf="@+id/timer"
+        app:layout_constraintVertical_bias="0.598" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

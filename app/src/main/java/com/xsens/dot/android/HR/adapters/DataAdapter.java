@@ -100,7 +100,6 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
     ArrayList<ArrayList<threeAxis>> accDataAll = new ArrayList<ArrayList<threeAxis>>();
 
     ArrayList<threeAxis> walkAccData = new ArrayList<threeAxis>();
-    ArrayList<threeAxis> walkAccData_wg = new ArrayList<threeAxis>();
     ArrayList<ArrayList<threeAxis>> walkAccDataAll = new ArrayList<ArrayList<threeAxis>>();
 
     //Vector<Vector<threeAxis>> accDataAll = new Vector<Vector<threeAxis>>();
@@ -127,9 +126,7 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
     private float[] LM_COEFFICIENTS;
 
     float[] HR_result = new float[3];
-    float walk_vel = 0.0f;
 
-    int gcdNumD = 0;
     /**
      * Default constructor.
      *
@@ -206,6 +203,8 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
     @SuppressLint("DefaultLocale")
     public void onBindViewHolder(@NonNull DataViewHolder holder, int position) {
 
+
+
         threeAxis accAxis = new threeAxis();
         String tag = (String) mDataList.get(position).get(KEY_TAG);
         XsensDotData xsData = (XsensDotData) mDataList.get(position).get(KEY_DATA);
@@ -218,27 +217,13 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
         float[][] rotM = calcQuaternionRotationMatrix(quaternions);
         float[] accV = calcSensCoordinateAcc(rotM, freeAcc);
 
-
         accAxis.x = accV[0];
         accAxis.y = accV[1];
         accAxis.z = accV[2];
         accData.add(accAxis);
 
-
-        float[] acc_wg = new float[3];
-        acc_wg[0] = freeAcc[0];
-        acc_wg[1] = freeAcc[1];
-        acc_wg[2] = freeAcc[2] - 9.81f;
-
-        threeAxis accAxis_wg = new threeAxis();
-        float[] accV_wg = calcSensCoordinateAcc(rotM, acc_wg);
-        accAxis_wg.x = accV_wg[0];
-        accAxis_wg.y = accV_wg[1];
-        accAxis_wg.z = accV_wg[2];
-
         if(walkEvent){
             walkAccData.add(accAxis);
-            walkAccData_wg.add(accAxis_wg);
         }
 
         accX_series[0] = accX_series[1];
@@ -342,33 +327,24 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
                         walkEvent = true;
                     }
                     else{
-                        walkCycle_length = walkAccData_wg.size();
+                        walkCycle_length = walkAccData.size();
                         walkAccDataAll.add(walkAccData);
 
                         threeAxis bufData = new threeAxis();
                         double[][] input = new double[3][walkCycle_length];
 
                         for(int i=0; i < walkCycle_length; i++){
-                            bufData = walkAccData_wg.get(i);
+                            bufData = walkAccData.get(i);
                             input[0][i] = bufData.x;
                             input[1][i] = bufData.y;
                             input[2][i] = bufData.z;
                         }
 
-                        //HR_result[0] = calcHR(input[0]);
+                        HR_result[0] = calcHR(input[0]);
                         HR_result[1] = calcHR(input[1]);
-                        //HR_result[2] = calcHR(input[2]);
-
-                        //calc velocity
-                        float[][] pca_input = new float[3][ANALYSIS_DATA_SIZE];
-                        gcdNumD = (walkCycle_length-1) * (ANALYSIS_DATA_SIZE-1) / calcGCD(walkCycle_length-1, (ANALYSIS_DATA_SIZE-1));
-                        pca_input[0] = setDataLength(walkCycle_length, input[0]);
-                        pca_input[1] = setDataLength(walkCycle_length, input[1]);
-                        pca_input[2] = setDataLength(walkCycle_length, input[2]);
-                        walk_vel = calcWalkVelocity(pca_input[1], pca_input[2], pca_input[0]);
+                        HR_result[2] = calcHR(input[2]);
 
                         walkAccData.clear();
-                        walkAccData_wg.clear();
                     }
 
                 }
@@ -385,17 +361,18 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
 
         // display on UI
         String eulerAnglesStr =
-                        //String.format("%d", gcdNumD ) + ", " +
+                        //String.format("%.6f", PCA_MATRIX[0][0]) + ", " +
                         String.format("%d", stepNum) + ", " +
-                        String.format("%f", walk_vel) + ", " +
-                        String.format("HRy: %f", HR_result[1]) + ", " +
+                        String.format("%f", HR_result[0]) + ", " +
+                                String.format("%f", HR_result[1]) + ", " +
+                                String.format("%f", HR_result[2]) + ", " +
                         String.format("%s", nowFoot) ;
         holder.orientationData.setText(eulerAnglesStr);
 
         String freeAccStr =
-                        String.format("%.6f", accV_wg[0]) + ", " +
-                        String.format("%.6f", accV_wg[1]) + ", " +
-                        String.format("%.6f", accV_wg[2]);
+                        String.format("%.6f", accV[0]) + ", " +
+                        String.format("%.6f", accV[1]) + ", " +
+                        String.format("%.6f", accV[2]);
         holder.freeAccData.setText(freeAccStr);
 
         // save to file
@@ -503,7 +480,7 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
         return  calcGCD(b%a, a);
     }
 
-    public float[] setDataLength(int dataL, double[] data){
+    public float[] setDataLength(int dataL, float[] data){
         int gcdNum = calcGCD(dataL-1, (ANALYSIS_DATA_SIZE-1));
         //check gcdNum == 0 ?
         int lcmNum = (dataL-1) * (ANALYSIS_DATA_SIZE-1) / gcdNum;
@@ -513,71 +490,26 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
         float[] expandedData = new float[lcmNum];
         float[] adjustedData = new float[ANALYSIS_DATA_SIZE];
         int count = 0;
-        expandedData[0] = (float)data[0];
 
-        Log.d(TAG, "LCM Num: " + String.valueOf(lcmNum));
         for(int i=0; i < (dataL-1); i++){
             for(int k=0; k<num_sep; k++){
-                expandedData[count] = (float)data[i] + (float)(data[i+1] - data[i]) * (float)k / (float)num_sep;
-                //Log.d(TAG, String.valueOf(data[i]) + ":" + String.valueOf(expandedData[count]) + ":" + String.valueOf(data[i+1]));
+                expandedData[count] = data[i] + (data[i+1] - data[i]) * k / num_sep;
                 count++;
             }
         }
 
-        adjustedData[0] = expandedData[0];
-        for(int i=1; i < ANALYSIS_DATA_SIZE; i++){
-            //Log.d(TAG, String.valueOf(i));
-            //Log.d(TAG, String.valueOf(expandedData[(i*num_get-1)]));
-            adjustedData[i] = expandedData[(i*num_get-1)];
+        for(int i=0; i < ANALYSIS_DATA_SIZE; i++){
+            adjustedData[i] = expandedData[1+(i-1)*num_get];
         }
 
         return adjustedData;
     }
 
-    public float calcWalkVelocity(float[] dataX, float[] dataY, float[] dataZ){
-        float velocity = 0.0f;
-        float[] allData = new float[ANALYSIS_DATA_SIZE*3];
+    public float calcWalkVelocity(float[] data){
+        //とりま係数はベタ打ち
 
-        for(int i=0; i<ANALYSIS_DATA_SIZE; i++){
-            allData[i] = dataX[i];
-            allData[ANALYSIS_DATA_SIZE+i] = dataY[i];
-            allData[ANALYSIS_DATA_SIZE*2+i] = dataZ[i];
-        }
 
-        float[] pcaVec     = new float[PCA_DATA_SIZE];
-        float[] pcaVec_nor = new float[PCA_DATA_SIZE];
-        float pcaVec_sum = 0.0f;
-        float pcaVec_ave = 0.0f;
-        float pcaVec_sd = 0.0f;
-
-        for(int j=0; j<PCA_DATA_SIZE; j++){
-            pcaVec[j] = 0.0f;
-            for(int i=0; i<(3*ANALYSIS_DATA_SIZE); i++){
-                pcaVec[j] += PCA_MATRIX[i][j] * allData[i];
-            }
-
-            pcaVec_sum += pcaVec[j];
-        }
-
-        pcaVec_ave = pcaVec_sum / PCA_DATA_SIZE;
-        pcaVec_sum = 0.0f;
-
-        for(int j=0; j<PCA_DATA_SIZE; j++){
-            pcaVec_sum += (pcaVec[j] - pcaVec_ave) * (pcaVec[j] - pcaVec_ave);
-        }
-
-        pcaVec_sd = (float) Math.sqrt(pcaVec_sum / PCA_DATA_SIZE);
-
-        for(int j=0; j<PCA_DATA_SIZE; j++){
-           pcaVec_nor[j] = (pcaVec[j] - pcaVec_ave) / pcaVec_sd;
-        }
-
-        velocity = 0f;
-        for(int j=0; j<PCA_DATA_SIZE; j++){
-            velocity += LM_COEFFICIENTS[j] * pcaVec_nor[j];
-        }
-
-        return velocity;
+        return 0.0f;
     }
 
     public float[][] calcQuaternionRotationMatrix(float[] q){

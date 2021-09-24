@@ -212,7 +212,7 @@ public class MainActivity extends AppCompatActivity {
             case FRAGMENT_TAG_DATA:
 
                 scanItem.setVisible(false);
-                streamingItem.setVisible(true);
+                streamingItem.setVisible(false);
                 measureItem.setVisible(true);
                 graphItem.setVisible(true);
                 closeItem.setVisible(true);
