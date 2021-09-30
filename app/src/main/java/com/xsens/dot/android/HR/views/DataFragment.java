@@ -129,7 +129,6 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
     // A steps and steplength and HR data save file
     public static String hrfilename = "";
 
-
     // The graph data file
     private String grfilename = "";
 
@@ -231,17 +230,6 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
                 } else {
                     startIsClicking = false;    // start
                 }
-
-                /* For TEST : Countdown timer
-                mBinding.timer.setStartValue(timerVal[0]);
-                mBinding.timer.setEndValue(0);
-                Toast.makeText(getContext(), "スタート", Toast.LENGTH_SHORT).show();
-                pulseCountDown.start(new OnCountdownCompleted() {
-                    @Override
-                    public void completed() {
-                        Toast.makeText(getContext(), "ストップ", Toast.LENGTH_SHORT).show();
-                    }
-                });*/
             }
         });
 
@@ -331,7 +319,6 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
 
             for (int j = 0; j < walkAccDataAll.get(i).size(); j++) {
                  DataAdapter.threeAxis axis = walkAccDataAll.get(i).get(j);
-                 Log.d("chkWalkAccDataAll", "axis = " + axis.x + ", " + axis.y + ", " + axis.z);
             }
         }
 
@@ -357,6 +344,7 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
 
         mBinding.syncResult.setText("-");
         mDataList.clear();
+        mDataAdapter.iniVariable();
         mDataAdapter.notifyDataSetChanged();
     }
 
@@ -475,15 +463,43 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
     /**
      * Create Graph data file for Reader Chart.
      */
+    @SuppressLint("DefaultLocale")
     private void createGraphFiles() {
 
         ArrayList<XsensDotDevice> devices = mSensorViewModel.getAllSensors();
+        String graphdata;
+        float hrAve, velAve = 0;
+        float hrScore, velScore = 0, sdScore;
+        double sdTen;
 
         for (XsensDotDevice device : devices) {
 
             String tag = device.getTag().isEmpty() ? device.getName() : device.getTag();
 
-            Log.d(TAG, "createGraphFiles() - stepNum = " + stepNum);
+            // HR Average
+            hrAve = mDataAdapter.hrVal / mDataAdapter.hrCnt;
+
+            // HR Score
+            if (hrAve > 100) {
+                hrScore = 100;
+            } else {
+                hrScore = hrAve;
+            }
+
+            // Walk Velocity Average
+            if (mDataAdapter.velVal != 0) {
+                velAve = mDataAdapter.velVal / mDataAdapter.velCnt;
+                // Walk Velocity Score
+                if (velAve <= 0) {
+                    velScore = 0;
+                } else if (velAve >= 1.6) {
+                    velScore = 100;
+                } else {
+                    velScore = (float) ((velAve / (1.6 - 0)) * 100);
+                }
+            } else {
+                Toast.makeText(getContext(), "再計測してください", Toast.LENGTH_SHORT).show();
+            }
 
             // Reproducibility
             double sum = 0.0;
@@ -501,9 +517,22 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
 
             double variance = devsum / stepNum;     // 分散
 
-            @SuppressLint("DefaultLocale")
-            String s = String.format("%.3f", Math.sqrt(variance));      // Standard Deviation
-            Log.d(TAG, "createGraphFiles() - Standard Deviation = " + s);
+            double sd = Math.sqrt(variance);     // Standard Deviation
+
+            // Standard Deviation Score
+            sdTen = ((sd / (ave * 0.5)) * 100);
+            sdScore = (float) (100 - sdTen);
+            if (sdScore > 100) { sdScore = 100; }
+
+            String datetime = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS", Locale.getDefault()).format(new Date());
+            graphdata = String.format("%s", datetime) + ", " +       // 日時
+                    String.format("%d", stepNum) + ", " +            // 歩数
+                    String.format("%f", hrAve) + ", " +              // HR
+                    String.format("%f", velAve) + ", " +             // 歩行速度
+                    String.format("%f", sd) + ", " +                 // 再現性
+                    String.format("%f", hrScore) + ", " +            // HR(100点)
+                    String.format("%f", velScore) + ", " +           // 歩行速度(100点)
+                    String.format("%f", sdScore);                    // 再現性(100点)
 
             if (getContext() != null) {
 
@@ -511,7 +540,6 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
                 // Don't need user to granted the storage permission.
                 File dir = getContext().getExternalFilesDir(null);
                 // graph file
-                //grfilename = dir.getAbsolutePath() + File.separator + tag + "_" + "graphdata.csv";
                 grfilename = dir.getAbsolutePath() + File.separator + "graphdata.csv";
                 Path path = Paths.get(grfilename);
                 File file = new File(grfilename);
@@ -525,12 +553,11 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
                 }
             }
 
-
             File outputFile = new File(grfilename);
 
             try {
                 FileWriter outputWriter = new FileWriter(outputFile, true);
-                outputWriter.append(grphdata).append(", ").append(s).append("\n");
+                outputWriter.append(graphdata).append("\n");
                 outputWriter.close();
 
             } catch (IOException e) {

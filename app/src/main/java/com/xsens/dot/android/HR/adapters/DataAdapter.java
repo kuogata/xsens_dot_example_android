@@ -81,7 +81,7 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
 
     //
     private static float[] accX_series = new float[5];
-    private int preStepNum = 0;
+    public static int preStepNum = 0;
     public static int stepNum = 0;
     private int chkTime = 1000;
     private float stepLength = 0f;
@@ -126,6 +126,9 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
 
     float[] HR_result = new float[3];
     float walkVelocity = 0f;
+    public float hrVal = 0f;
+    public float velVal = 0f;
+    public int hrCnt = 0, velCnt = 0;
 
     /**
      * Default constructor.
@@ -297,7 +300,7 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
                 //Judge left or right
                 intYacc = 0.0f;
                 for(int k=0; k<accData.size(); ++k){
-                    intYacc += accData.get(k).y * 0.01667;
+                    intYacc += accData.get(k).y * 0.012f;//0.01667;
                 }
 
                 if(intYacc > 0.0f){
@@ -400,27 +403,32 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
                         String.format("%.6f", accAxis_wg.x);
         holder.freeAccData.setText(freeAccStr);
 
+        // For Score
+        if (HR_result[1] > 0) {
+            hrVal += HR_result[1];
+            hrCnt++;
+        }
+
+        if (walkVelocity > 0) {
+            velVal += walkVelocity;
+            velCnt++;
+        }
+
         // save to file
         if (preStepNum != stepNum) {
             String datetime = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS", Locale.getDefault()).format(new Date());
 
             String str = String.format("%s", datetime) + ", " +
                     String.format("%d", stepNum) + ", " +
-                    String.format("%.6f", stepLength) + ", " +
-                    String.format("%d", walkCycle_length) + ", " +
-                    String.format("%s", nowFoot) + ", " +
-                    String.format("%.6f", freeAcc[0]) + ", " +
-                    String.format("%.6f", freeAcc[1]) + ", " +
-                    String.format("%.6f", freeAcc[2]);
-
-            Log.i(TAG, "steps - str = " + str);
+                    String.format("%f", HR_result[1]) + ", " +
+                    String.format("%f", hrVal) + ", " +
+                    String.format("%d", hrCnt) + ", " +
+                    String.format("%f", walkVelocity) + ", " +
+                    String.format("%f", velVal) + ", " +
+                    String.format("%d", velCnt) + ", " +
+                    String.format("%s", nowFoot);
 
             new SavingThread(str).start();
-
-            grphdata = String.format("%s", datetime) + ", " +
-                    "3.05, " +      // HR
-                    String.format("%d", stepNum) + ", " +
-                    String.format("%.6f", stepLength);
 
             preStepNum = stepNum;
         }
@@ -718,5 +726,18 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
             orientationData = v.findViewById(R.id.orientation_data);
             freeAccData = v.findViewById(R.id.free_acc_data);
         }
+    }
+
+    public void iniVariable() {
+        stepNum = 0;
+        preStepNum = 0;
+        hrVal = 0f;
+        velVal = 0f;
+        hrCnt = 0;
+        velCnt = 0;
+        timeData = new ArrayList<>();
+        endTime = 0;
+        dt = 0;
+        timeFlg = true;
     }
 }

@@ -115,6 +115,7 @@ public class GraphFragment extends Fragment {
         mRadarChart.setWebLineWidthInner(1f);                // ウェブラインの幅の線
         mRadarChart.setWebColorInner(Color.LTGRAY);          // ウェブラインの幅の線の色
         mRadarChart.setWebAlpha(100);                        // ウェブラインの透明度 デフォルト=150, 0=100%透明
+        mRadarChart.setTouchEnabled(false);
 
         // 表示データの取得とスタイル設定
         setData();
@@ -146,7 +147,7 @@ public class GraphFragment extends Fragment {
         yAxis.setDrawLabels(true);                      // Y軸のラベル表示
 
         // 凡例設定
-        Legend l = mRadarChart.getLegend();                                      // 凡例
+        Legend l = mRadarChart.getLegend();                                     // 凡例
         l.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);             // 表示位置（縦）
         l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);      // 表示位置（横）
         l.setOrientation(Legend.LegendOrientation.VERTICAL);                    // 複数個表示する場合の表示位置
@@ -181,22 +182,25 @@ public class GraphFragment extends Fragment {
             while ((line = br.readLine()) != null) {
                 cnt ++;
                 String[] values = line.split(",");
-                String datetime = values[0];                        // 0 : datetime
-                float hr = Float.parseFloat(values[1]);             // 1 : HR
-                float steps = Float.parseFloat(values[2]);          // 2 : 歩数(仮)
-                double steplength = Double.parseDouble(values[3]);  // 3 : 歩幅(仮)
-                float sd = Float.parseFloat(values[4]);             // 4 : 再現性(標準偏差)
+                String datetime = values[0];                               // 0 : datetime
+                float steps = Float.parseFloat(values[1]);                 // 1 : 歩数
+                float hr = Float.parseFloat(values[2]);                    // 2 : HR
+                float walkVelocity = Float.parseFloat(values[3]);          // 3 : 歩行速度
+                float sd = Float.parseFloat(values[4]);                    // 4 : 再現性(標準偏差)
+                float hrScr = Math.round(Float.parseFloat(values[5]));     // 5 : HR(100点)
+                float walkScr = Math.round(Float.parseFloat(values[6]));   // 6 : 歩行速度(100点)
+                float sdScr = Math.round(Float.parseFloat(values[7]));     // 7 : 再現性(100点)
 
                 if (cnt == lineCount){
                     entry1 = datetime;
-                    entries1.add(new RadarEntry(hr));
-                    entries1.add(new RadarEntry(steps*2));
-                    entries1.add(new RadarEntry(sd/10));
+                    entries1.add(new RadarEntry(hrScr));
+                    entries1.add(new RadarEntry(walkScr));
+                    entries1.add(new RadarEntry(sdScr));
 
                     mBinding.curVal.setText(datetime);
                     mBinding.hrValue1.setText(String.format("%.2f", hr));
                     mBinding.repValue1.setText(String.format("%.2f", sd));
-                    mBinding.speedValue1.setText(String.format("%.2f", steps));
+                    mBinding.speedValue1.setText(String.format("%.2f", walkVelocity));
                 }
 
                 if (lineCount == 1) {
@@ -208,14 +212,14 @@ public class GraphFragment extends Fragment {
                 else {
                     if (cnt == lineCount - 1 ){
                         entry2 = datetime;
-                        entries2.add(new RadarEntry(hr));
-                        entries2.add(new RadarEntry(steps*2));
-                        entries2.add(new RadarEntry(sd/10));
+                        entries2.add(new RadarEntry(hrScr));
+                        entries2.add(new RadarEntry(walkScr));
+                        entries2.add(new RadarEntry(sdScr));
 
                         mBinding.preVal.setText(datetime);
                         mBinding.hrValue2.setText(String.format("%.2f", hr));
                         mBinding.repValue2.setText(String.format("%.2f", sd));
-                        mBinding.speedValue2.setText(String.format("%.2f", steps));
+                        mBinding.speedValue2.setText(String.format("%.2f", walkVelocity));
                     }
                 }
             }
@@ -228,11 +232,11 @@ public class GraphFragment extends Fragment {
         set1.setFillColor(Color.CYAN);
         //set1.setColor(Color.parseColor("#fffacd"));            // 線の色 (lemonchiffon)
         //set1.setFillColor(Color.parseColor("#fffacd"));        // 塗り潰したフィールドの色 (lemonchiffon)
-        set1.setDrawFilled(true);                                       // 線の下を塗り潰すか
-        set1.setFillAlpha(180);                                         // 塗り潰しの透明度
-        set1.setLineWidth(2f);                                          // 線の太さ 1f〜
-        set1.setDrawHighlightCircleEnabled(true);                       // ?
-        set1.setDrawHighlightIndicators(false);                         // ?
+        set1.setDrawFilled(true);                                // 線の下を塗り潰すか
+        set1.setFillAlpha(180);                                  // 塗り潰しの透明度
+        set1.setLineWidth(2f);                                   // 線の太さ 1f〜
+        set1.setDrawHighlightCircleEnabled(true);                // ?
+        set1.setDrawHighlightIndicators(false);                  // ?
 
         RadarDataSet set2 = new RadarDataSet(entries2, entry2);
         //set2.setColor(Color.rgb(121, 162, 175));
@@ -251,7 +255,7 @@ public class GraphFragment extends Fragment {
 
         RadarData data = new RadarData(sets);
         data.setValueTextSize(8f);              // 値の文字サイズ
-        data.setDrawValues(true);               // 値の表示
+        data.setDrawValues(false);               // 値の表示
         data.setValueTextColor(Color.DKGRAY);   // 値の表示色
 
         mRadarChart.setData(data);   // sets data & also calls notifyDataSetChanged()
