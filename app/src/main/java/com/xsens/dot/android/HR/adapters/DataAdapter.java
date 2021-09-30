@@ -117,7 +117,7 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
     public static ArrayList<Double> timeData = new ArrayList<>();
     public static String grphdata = "";
 
-    int FFT_SIZE = 20;
+    int FFT_SIZE = 20; //16;
     int ANALYSIS_DATA_SIZE = 101;
     int PCA_DATA_SIZE = 17;
 
@@ -188,8 +188,6 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
         HR_result[1] = 0;
         HR_result[2] = 0;
 
-
-
     }
 
     @NonNull
@@ -217,8 +215,8 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
         float[] accV = calcSensCoordinateAcc(rotM, freeAcc);
 
         accAxis.x = accV[0];
-        accAxis.y = accV[1];
-        accAxis.z = accV[2];
+        accAxis.y = -accV[1];
+        accAxis.z = -accV[2];
         accData.add(accAxis);
 
         accX_series[0] = accX_series[1];
@@ -238,8 +236,8 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
             freeAcc_wg[2] = freeAcc[2] - 9.81f;
             float[] accV_wg = calcSensCoordinateAcc(rotM, freeAcc_wg);
             accAxis_wg.x = accV_wg[0];
-            accAxis_wg.y = accV_wg[1];
-            accAxis_wg.z = accV_wg[2];
+            accAxis_wg.y = -accV_wg[1];
+            accAxis_wg.z = -accV_wg[2];
 
             accData_wg.add(accAxis_wg);
         }
@@ -354,10 +352,13 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
                             input[2][i] = bufData.z;
 
                             bufData_wg = accData_wg.get(i);
-                            input_wg[0][i] = bufData.x;
-                            input_wg[1][i] = bufData.y;
-                            input_wg[2][i] = bufData.z;
+                            input_wg[0][i] = bufData_wg.x;
+                            input_wg[1][i] = bufData_wg.y;
+                            input_wg[2][i] = bufData_wg.z;
+
                         }
+
+                        accData_wg.clear();
 
                         HR_result[0] = calcHR(input[0]);
                         HR_result[1] = calcHR(input[1]);
@@ -368,10 +369,7 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
                         expAccData[1] = setDataLength(walkCycle_length,  input_wg[1]);
                         expAccData[2] = setDataLength(walkCycle_length,  input_wg[2]);
 
-
-
                         walkVelocity = calcWalkVelocity(expAccData[1], expAccData[2], expAccData[0]);
-
                         walkAccData.clear();
                     }
 
@@ -469,25 +467,19 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
         fft.realForward(data);
 
         for(int i=0, j=0; i < FFT_SIZE / 2 ; i+=2, j++){
-            fft_data[i/2] = Math.sqrt(Math.pow(data[i], 2) + Math.pow(data[i+1], 2));
+            fft_data[i/2] = Math.pow(data[i], 2) + Math.pow(data[i+1], 2);
 
-            if(j != 0){
+            //if(j != 0){
                 if(j % 2 == 0){
                     even_harmonics += fft_data[j];
                 }
                 else{
                     odd_harmonics += fft_data[j];
                 }
-            }
+            //}
         }
 
         hr = even_harmonics / (even_harmonics + odd_harmonics) * 100;
-
-        /*float[] hr_debug = new float[3];
-        hr_debug[0] = (float) even_harmonics;
-        hr_debug[1] = (float) odd_harmonics;
-        hr_debug[2] = (float) hr;*/
-
         return (float)hr;
     }
 
@@ -527,11 +519,8 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
         }
 
         adjustedData[0] = expandedData[0];
-        Log.d(TAG, String.valueOf(lcmNum));
         for(int i=1; i < ANALYSIS_DATA_SIZE; i++){
-            Log.d(TAG, String.valueOf(expandedData[i*num_get-1]));
             adjustedData[i] = expandedData[i*num_get-1];
-            Log.d(TAG, String.valueOf(i));
         }
 
 
