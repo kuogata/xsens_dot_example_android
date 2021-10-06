@@ -7,11 +7,14 @@
     <string name="hint_connecting">Please wait for the connection result...</string>
     <string name="hint_syncing_failed">Put sensors as close as possible and try again.</string>
     <string name="hint_check_connection">Some sensors are disconnected. Please check the connection.</string>
+    <string name="hint_measure_start">計測を開始しました</string>
+    <string name="hint_measure_stop">計測を終了しました</string>
+    <string name="hint_remeasure">再計測してください</string>
 
     <string name="menu_start_scan">スキャン</string>
     <string name="menu_stop_scan">スキャン停止</string>
-    <string name="menu_start_streaming">スタート</string>
-    <string name="menu_stop_streaming">ストップ</string>
+    <string name="menu_start_streaming">計測開始</string>
+    <string name="menu_stop_streaming">計測停止</string>
     <string name="menu_measure">計測画面</string>
     <string name="menu_graph">グラフ画面</string>
     <string name="menu_close">閉じる</string>
@@ -24,13 +27,22 @@
     <string name="syncing">同期中</string>
     <string name="mode">Mode :</string>
     <string name="sync_status">同期状態 :</string>
-    <string name="sync_result_success">成功</string>
-    <string name="sync_result_fail">失敗</string>
+    <string name="sync_result_success">同期成功</string>
+    <string name="sync_result_fail">同期失敗</string>
     <string name="mode_complete_euler">Complete (Euler)</string>
     <string name="mode_complete_quat">Complete (Quaternion)</string>
+    <!-- ここから -->
+    <!-- For Debug mode : デバッグモードの場合、有効にする -->
     <string name="name">Name:</string>
     <string name="orientation">Orientation (deg):</string>
     <string name="free_acc">Free Acceleration (m/s2):</string>
+    <!-- For Release mode : リリースモードの場合、有効にする -->
+    <!--
+    <string name="name"> </string>
+    <string name="orientation">歩数（歩）</string>
+    <string name="free_acc"> </string>
+    -->
+    <!-- ここまで -->
     <string name="hr">ＨＲ　　　:</string>
     <string name="rep">再現性　　:</string>
     <string name="speed">歩行速度　:</string>

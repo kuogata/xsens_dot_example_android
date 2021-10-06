@@ -45,16 +45,16 @@ public class GraphFragment extends Fragment {
 
     private static final String TAG = GraphFragment.class.getSimpleName();
 
-    // The view binder of DataFragment
+    // The view binder of GraphFragment
     private FragmentGraphBinding mBinding;
 
     // RadarChart library
     private RadarChart mRadarChart;
 
     /**
-     * Get the instance of DataFragment
+     * Get the instance of GraphFragment
      *
-     * @return The instance of DataFragment
+     * @return The instance of GraphFragment
      */
     public static GraphFragment newInstance() {
 
@@ -79,7 +79,6 @@ public class GraphFragment extends Fragment {
 
         mBinding = FragmentGraphBinding.inflate(LayoutInflater.from(getContext()));
         return mBinding.getRoot();
-        //return inflater.inflate(R.layout.fragment_graph, container, false);
     }
 
     @Override
@@ -108,7 +107,7 @@ public class GraphFragment extends Fragment {
         // レーダーチャート 描画エリアの設定
         mRadarChart = view.findViewById(R.id.RadarChart);
         mRadarChart.setBackgroundColor(Color.rgb(245, 245, 245));
-        //RadarChart.setBackgroundColor(Color.WHITE);       // グラフエリアの背景色
+        //mRadarChart.setBackgroundColor(Color.WHITE);       // グラフエリアの背景色
         mRadarChart.getDescription().setEnabled(false);      // 説明テキストの表示
         mRadarChart.setWebLineWidth(1f);                     // ウェブラインの軸の太さ
         mRadarChart.setWebColor(Color.LTGRAY);               // ウェブラインの軸の色
@@ -228,19 +227,15 @@ public class GraphFragment extends Fragment {
         }
 
         RadarDataSet set1 = new RadarDataSet(entries1, entry1);  // データ１(DataEntry1)
-        set1.setColor(Color.CYAN);
-        set1.setFillColor(Color.CYAN);
-        //set1.setColor(Color.parseColor("#fffacd"));            // 線の色 (lemonchiffon)
-        //set1.setFillColor(Color.parseColor("#fffacd"));        // 塗り潰したフィールドの色 (lemonchiffon)
-        set1.setDrawFilled(true);                                // 線の下を塗り潰すか
-        set1.setFillAlpha(180);                                  // 塗り潰しの透明度
-        set1.setLineWidth(2f);                                   // 線の太さ 1f〜
-        set1.setDrawHighlightCircleEnabled(true);                // ?
-        set1.setDrawHighlightIndicators(false);                  // ?
+        set1.setColor(Color.CYAN);                     // 線の色 (cyan)
+        set1.setFillColor(Color.CYAN);                 // 塗り潰したフィールドの色 (cyan)
+        set1.setDrawFilled(true);                      // 線の下を塗り潰すか
+        set1.setFillAlpha(180);                        // 塗り潰しの透明度
+        set1.setLineWidth(2f);                         // 線の太さ 1f〜
+        set1.setDrawHighlightCircleEnabled(true);      // ?
+        set1.setDrawHighlightIndicators(false);        // ?
 
         RadarDataSet set2 = new RadarDataSet(entries2, entry2);
-        //set2.setColor(Color.rgb(121, 162, 175));
-        //set2.setFillColor(Color.rgb(121, 162, 175));
         set2.setColor(Color.parseColor("#dda0dd"));            // 線の色 (plum)
         set2.setFillColor(Color.parseColor("#dda0dd"));        // 塗り潰したフィールドの色 (plum)
         set2.setDrawFilled(true);                                       // 線の下を塗り潰すか

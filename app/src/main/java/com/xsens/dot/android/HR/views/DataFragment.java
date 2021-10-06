@@ -83,7 +83,6 @@ import java.util.Map;
 import static com.xsens.dot.android.HR.adapters.DataAdapter.KEY_ADDRESS;
 import static com.xsens.dot.android.HR.adapters.DataAdapter.KEY_DATA;
 import static com.xsens.dot.android.HR.adapters.DataAdapter.KEY_TAG;
-import static com.xsens.dot.android.HR.adapters.DataAdapter.grphdata;
 import static com.xsens.dot.android.HR.adapters.DataAdapter.stepNum;
 import static com.xsens.dot.android.HR.adapters.DataAdapter.timeData;
 import static com.xsens.dot.android.HR.adapters.DataAdapter.walkAccDataAll;
@@ -126,11 +125,14 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
     // A dialog during the synchronization
     private AlertDialog mSyncingDialog;
 
-    // A steps and steplength and HR data save file
-    public static String hrfilename = "";
+    // A HR data logging flag : true -> file save
+    public static boolean hrLogFlg = true;
+
+    // A HR data save file
+    public static String hrFileName = "";
 
     // The graph data file
-    private String grfilename = "";
+    private String graphFileName = "";
 
     // The timer initialize value, default is 10 sec
     private final int iniVal = 10;
@@ -140,7 +142,7 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
     private boolean startIsClicking = false;
 
     // PulseCountDownView Library
-    PulseCountDown mpulseCountDown;
+    PulseCountDown mPulseCountDown;
 
     // Number Picker Library
     NumberPicker mNumberPicker;
@@ -206,6 +208,7 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
         });
 
         // 計測時間設定後、OKボタンクリック
+        /*
         mBinding.btOk.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -213,9 +216,10 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
                 mBinding.timer.setText(String.valueOf(timerVal[0]));
             }
         });
+         */
 
         // タイマー表示取得
-        mpulseCountDown = mBinding.timer.findViewById(R.id.timer);
+        mPulseCountDown = mBinding.timer.findViewById(R.id.timer);
 
         // get the VIBRATOR_SERVICE system service
         //final Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
@@ -230,6 +234,7 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
                 } else {
                     startIsClicking = false;    // start
                 }
+                mBinding.btStart.setEnabled(false);
             }
         });
 
@@ -288,7 +293,11 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
 
             chkWalkAccDataAll();
 
-            createGraphFiles();
+            if ((mDataAdapter.hrVal != 0) && (mDataAdapter.velVal != 0)) {
+                createGraphFiles();
+            } else {
+                Toast.makeText(getContext(), getString(R.string.hint_remeasure), Toast.LENGTH_SHORT).show();
+            }
 
             startIsClicking = false;
 
@@ -447,17 +456,16 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
                 if (dir != null) {
 
                     // steps and step length and HR , saving file name
-                    hrfilename = dir.getAbsolutePath() +
+                    hrFileName = dir.getAbsolutePath() +
                             File.separator +
-                            tag + "_steps_" +
+                            tag + "_" +
                             new SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.getDefault()).format(new Date()) +
                             ".csv";
                 }
             }
         }
 
-        Log.d(TAG, "createFiles() - " + hrfilename);
-
+        Log.d(TAG, "createFiles() - " + hrFileName);
     }
 
     /**
@@ -468,8 +476,8 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
 
         ArrayList<XsensDotDevice> devices = mSensorViewModel.getAllSensors();
         String graphdata;
-        float hrAve, velAve = 0;
-        float hrScore, velScore = 0, sdScore;
+        float hrAve = 0, velAve = 0;
+        float hrScore = 0, velScore = 0, sdScore;
         double sdTen;
 
         for (XsensDotDevice device : devices) {
@@ -477,18 +485,25 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
             String tag = device.getTag().isEmpty() ? device.getName() : device.getTag();
 
             // HR Average
-            hrAve = mDataAdapter.hrVal / mDataAdapter.hrCnt;
+            if (mDataAdapter.hrVal != 0) {
+                hrAve = mDataAdapter.hrVal / mDataAdapter.hrCnt;
 
-            // HR Score
-            if (hrAve > 100) {
-                hrScore = 100;
+                // HR Score
+                if (hrAve > 100) {
+                    hrScore = 100;
+                } else if (hrAve <= 0) {
+                    hrScore = 0;
+                } else {
+                    hrScore = hrAve;
+                }
             } else {
-                hrScore = hrAve;
+                Toast.makeText(getContext(), getString(R.string.hint_remeasure), Toast.LENGTH_SHORT).show();
             }
 
             // Walk Velocity Average
             if (mDataAdapter.velVal != 0) {
                 velAve = mDataAdapter.velVal / mDataAdapter.velCnt;
+
                 // Walk Velocity Score
                 if (velAve <= 0) {
                     velScore = 0;
@@ -498,31 +513,35 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
                     velScore = (float) ((velAve / (1.6 - 0)) * 100);
                 }
             } else {
-                Toast.makeText(getContext(), "再計測してください", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), getString(R.string.hint_remeasure), Toast.LENGTH_SHORT).show();
             }
 
             // Reproducibility
             double sum = 0.0;
-            for (int i = 0; i < stepNum; i++) {
+            for (int i = 1; i < stepNum; i++) {
                 Log.d(TAG, "createGraphFiles() - timeData = " + timeData.get(i));
                 sum += timeData.get(i);
             }
 
-            double ave = sum / stepNum;     // Average for each step
+            double ave = sum / (stepNum - 1) ;     // Average for each step
 
             double devsum = 0.0;
-            for (int i = 0; i < stepNum; i++) {
+            for (int i = 1; i < stepNum; i++) {
                 devsum += Math.pow(timeData.get(i) - ave, 2);       // Deviation Sum
             }
 
-            double variance = devsum / stepNum;     // 分散
+            double variance = devsum / (stepNum - 1);     // 分散
 
             double sd = Math.sqrt(variance);     // Standard Deviation
 
             // Standard Deviation Score
             sdTen = ((sd / (ave * 0.5)) * 100);
             sdScore = (float) (100 - sdTen);
-            if (sdScore > 100) { sdScore = 100; }
+            if (sdScore > 100) {
+                sdScore = 100;
+            } else if (sdScore <= 0) {
+                sdScore = 0;
+            }
 
             String datetime = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS", Locale.getDefault()).format(new Date());
             graphdata = String.format("%s", datetime) + ", " +       // 日時
@@ -540,9 +559,9 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
                 // Don't need user to granted the storage permission.
                 File dir = getContext().getExternalFilesDir(null);
                 // graph file
-                grfilename = dir.getAbsolutePath() + File.separator + "graphdata.csv";
-                Path path = Paths.get(grfilename);
-                File file = new File(grfilename);
+                graphFileName = dir.getAbsolutePath() + File.separator + "graphdata.csv";
+                Path path = Paths.get(graphFileName);
+                File file = new File(graphFileName);
 
                 if (!file.exists()) {
                     try {
@@ -553,7 +572,7 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
                 }
             }
 
-            File outputFile = new File(grfilename);
+            File outputFile = new File(graphFileName);
 
             try {
                 FileWriter outputWriter = new FileWriter(outputFile, true);
@@ -669,8 +688,10 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
                             // Create Xsens Dot Default Log File
                             //createFiles();
 
-                            // create HR Log File
-                            createHRFiles();
+                            // create HR Log File for Debug
+                            if (hrLogFlg) {
+                                createHRFiles();
+                            }
 
                             // create Graph data File
                             //createGraphFiles();
@@ -682,11 +703,11 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
                             // タイマー
                             mBinding.timer.setStartValue(timerVal[0]);
                             mBinding.timer.setEndValue(0);
-                            Toast.makeText(getContext(), "スタート", Toast.LENGTH_SHORT).show();
-                            mpulseCountDown.start(new OnCountdownCompleted() {
+                            Toast.makeText(getContext(), getString(R.string.hint_measure_start), Toast.LENGTH_SHORT).show();
+                            mPulseCountDown.start(new OnCountdownCompleted() {
                                 @Override
                                 public void completed() {
-                                    Toast.makeText(getContext(), "ストップ", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getContext(), getString(R.string.hint_measure_stop), Toast.LENGTH_SHORT).show();
                                     onStreamingTriggered();
                                 }
                             });

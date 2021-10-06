@@ -61,7 +61,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 
-import static com.xsens.dot.android.HR.views.DataFragment.hrfilename;
+import static com.xsens.dot.android.HR.views.DataFragment.hrLogFlg;
+import static com.xsens.dot.android.HR.views.DataFragment.hrFileName;
 
 /**
  * A view adapter for item view to present data.
@@ -83,7 +84,7 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
     private static float[] accX_series = new float[5];
     public static int preStepNum = 0;
     public static int stepNum = 0;
-    private int chkTime = 1000;
+    private int chkTime = 0;
     private float stepLength = 0f;
     private int dataSize = 0;
     private float debug_max[] = {0f};
@@ -115,7 +116,6 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
     private double dt = 0;
     private boolean timeFlg = true;
     public static ArrayList<Double> timeData = new ArrayList<>();
-    public static String grphdata = "";
 
     int FFT_SIZE = 20; //16;
     int ANALYSIS_DATA_SIZE = 101;
@@ -129,6 +129,9 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
     public float hrVal = 0f;
     public float velVal = 0f;
     public int hrCnt = 0, velCnt = 0;
+
+    // For Debug mode : true -> show UI
+    private static final boolean DEBUG = true;
 
     /**
      * Default constructor.
@@ -209,7 +212,11 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
         String tag = (String) mDataList.get(position).get(KEY_TAG);
         XsensDotData xsData = (XsensDotData) mDataList.get(position).get(KEY_DATA);
 
-        holder.sensorName.setText(tag);
+        if (DEBUG) {
+            holder.sensorName.setText(tag);
+        } else {
+            holder.sensorName.setText("");
+        }
 
         float[] quaternions = xsData.getQuat();
         double[] eulerAngles = xsData.getEuler();
@@ -336,7 +343,7 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
                         supportFoot = "right";
                     }*/
 
-                    if(walkEvent == false){
+                    if(!walkEvent){
                         walkEvent = true;
                     }
                     else{
@@ -374,6 +381,17 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
 
                         walkVelocity = calcWalkVelocity(expAccData[1], expAccData[2], expAccData[0]);
                         walkAccData.clear();
+
+                        // For Score
+                        if (HR_result[1] > 0) {
+                            hrVal += HR_result[1];
+                            hrCnt++;
+                        }
+
+                        if (walkVelocity > 0) {
+                            velVal += walkVelocity;
+                            velCnt++;
+                        }
                     }
 
                 }
@@ -388,50 +406,49 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
         }
         chkTime++;
 
-        // display on UI
-        String eulerAnglesStr =
-                        //String.format("%.6f", PCA_MATRIX[0][0]) + ", " +
-                        String.format("%d", stepNum) + ", " +
-                        String.format("HR: %f", HR_result[1]) + ", " +
-                        String.format("vel: %f", walkVelocity) + ", " +
-                        String.format("%s", nowFoot) ;
-        holder.orientationData.setText(eulerAnglesStr);
+        if (DEBUG) {
+            // display on UI
+            String eulerAnglesStr =
+                    //String.format("%.6f", PCA_MATRIX[0][0]) + ", " +
+                    String.format("%d", stepNum) + ", " +
+                            String.format("HR: %f", HR_result[1]) + ", " +
+                            String.format("vel: %f", walkVelocity) + ", " +
+                            String.format("%s", nowFoot) ;
+            holder.orientationData.setText(eulerAnglesStr);
 
-        String freeAccStr =
-                        String.format("%.6f", accAxis_wg.y) + ", " +
-                        String.format("%.6f", accAxis_wg.z) + ", " +
-                        String.format("%.6f", accAxis_wg.x);
-        holder.freeAccData.setText(freeAccStr);
+            String freeAccStr =
+                    String.format("%.6f", accAxis_wg.y) + ", " +
+                            String.format("%.6f", accAxis_wg.z) + ", " +
+                            String.format("%.6f", accAxis_wg.x);
+            holder.freeAccData.setText(freeAccStr);
+        } else {
+            String eulerAnglesStr =
+                    String.format("%d", stepNum);
+            holder.orientationData.setText(eulerAnglesStr);
 
-        // For Score
-        if (HR_result[1] > 0) {
-            hrVal += HR_result[1];
-            hrCnt++;
-        }
-
-        if (walkVelocity > 0) {
-            velVal += walkVelocity;
-            velCnt++;
+            holder.freeAccData.setText("");
         }
 
         // save to file
-        if (preStepNum != stepNum) {
-            String datetime = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS", Locale.getDefault()).format(new Date());
+        if (hrLogFlg) {
+            if (preStepNum != stepNum) {
+                String datetime = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS", Locale.getDefault()).format(new Date());
 
-            String str = String.format("%s", datetime) + ", " +
-                    String.format("%d", stepNum) + ", " +
-                    String.format("%f", HR_result[1]) + ", " +
-                    String.format("%f", hrVal) + ", " +
-                    String.format("%d", hrCnt) + ", " +
-                    String.format("%f", walkVelocity) + ", " +
-                    String.format("%f", velVal) + ", " +
-                    String.format("%d", velCnt) + ", " +
-                    String.format("%s", nowFoot);
+                String str = String.format("%s", datetime) + ", " +
+                        String.format("%d", stepNum) + ", " +
+                        String.format("%f", HR_result[1]) + ", " +
+                        String.format("%f", hrVal) + ", " +
+                        String.format("%d", hrCnt) + ", " +
+                        String.format("%f", walkVelocity) + ", " +
+                        String.format("%f", velVal) + ", " +
+                        String.format("%d", velCnt) + ", " +
+                        String.format("%s", nowFoot);
 
-            new SavingThread(str).start();
-
-            preStepNum = stepNum;
+                new SavingThread(str).start();
+            }
         }
+
+        preStepNum = stepNum;
     }
 
     private static class SavingThread extends Thread {
@@ -444,7 +461,7 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
         public void run() {
             super.run();
 
-            File outputFile = new File(hrfilename);
+            File outputFile = new File(hrFileName);
 
             try {
                 FileWriter outputWriter = new FileWriter(outputFile, true);

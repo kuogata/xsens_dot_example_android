@@ -23,7 +23,9 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/sensor_name_label" />
 
-    <TextView
+    <!-- ここから -->
+    <!-- For Debug mode  : デバッグモードの場合、有効にする -->
+        <TextView
         android:id="@+id/orientation_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -41,6 +43,32 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/orientation_label" />
+
+    <!-- For Release mode : リリースモードの場合、有効にする -->
+    <!--
+    <TextView
+        android:id="@+id/orientation_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="72dp"
+        android:text="@string/orientation"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/sensor_name" />
+
+    <TextView
+        android:id="@+id/orientation_data"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="4dp"
+        android:textSize="32sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/orientation_label" />
+    -->
+    <!-- ここまで -->
 
     <TextView
         android:id="@+id/free_acc_label"
@@ -65,7 +93,7 @@
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginTop="8dp"
-        android:background="@android:color/darker_gray"
+        android:background="@android:color/white"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/free_acc_data" />
