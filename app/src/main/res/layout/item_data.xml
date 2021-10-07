@@ -25,6 +25,7 @@
 
     <!-- ここから -->
     <!-- For Debug mode  : デバッグモードの場合、有効にする -->
+    <!--
         <TextView
         android:id="@+id/orientation_label"
         android:layout_width="wrap_content"
@@ -43,9 +44,9 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/orientation_label" />
+    -->
 
     <!-- For Release mode : リリースモードの場合、有効にする -->
-    <!--
     <TextView
         android:id="@+id/orientation_label"
         android:layout_width="wrap_content"
@@ -67,7 +68,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/orientation_label" />
-    -->
     <!-- ここまで -->
 
     <TextView

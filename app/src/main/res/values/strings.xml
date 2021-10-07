@@ -33,15 +33,15 @@
     <string name="mode_complete_quat">Complete (Quaternion)</string>
     <!-- ここから -->
     <!-- For Debug mode : デバッグモードの場合、有効にする -->
+    <!--
     <string name="name">Name:</string>
     <string name="orientation">Orientation (deg):</string>
     <string name="free_acc">Free Acceleration (m/s2):</string>
+    -->
     <!-- For Release mode : リリースモードの場合、有効にする -->
-    <!--
     <string name="name"> </string>
     <string name="orientation">歩数（歩）</string>
     <string name="free_acc"> </string>
-    -->
     <!-- ここまで -->
     <string name="hr">ＨＲ　　　:</string>
     <string name="rep">再現性　　:</string>

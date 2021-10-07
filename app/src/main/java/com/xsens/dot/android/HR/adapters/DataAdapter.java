@@ -131,7 +131,7 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.DataViewHolder
     public int hrCnt = 0, velCnt = 0;
 
     // For Debug mode : true -> show UI
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     /**
      * Default constructor.

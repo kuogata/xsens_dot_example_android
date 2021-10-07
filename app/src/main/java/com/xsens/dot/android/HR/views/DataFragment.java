@@ -126,7 +126,7 @@ public class DataFragment extends Fragment implements StreamingClickInterface, D
     private AlertDialog mSyncingDialog;
 
     // A HR data logging flag : true -> file save
-    public static boolean hrLogFlg = true;
+    public static boolean hrLogFlg = false;
 
     // A HR data save file
     public static String hrFileName = "";
